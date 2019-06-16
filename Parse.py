@@ -1,10 +1,8 @@
-import datetime
 import time
-import traceback
 
-from Parsing.DynamicParse import DynamicParse
-from Parsing.Requests import Requests
 from Pickss import Datas
+from DynamicWebParse.DynamicWebParse import DynamicWebParse
+from DynamicWebParse.Requests import Requests
 
 driver = '/home/az/ProjectsData/Drivers/chromedriver'
 
@@ -46,7 +44,7 @@ def appendPick(pick):
 
 
 if __name__ == '__main__':
-    parse = DynamicParse(driver)
+    parse = DynamicWebParse(driver)
     parse.makeUnvisibleDriver()
 
     requests = Requests(parse.getDriver())
