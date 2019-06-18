@@ -1,10 +1,23 @@
 import time
+import traceback
 
 from Pickss import Datas
 from DynamicWebParse.DynamicWebParse import DynamicWebParse
 from DynamicWebParse.Requests import Requests
+from peewee import *
+from Constants.DB import *
 
 driver = '/home/az/ProjectsData/Drivers/chromedriver'
+
+database = Proxy()
+
+while True:
+    try:
+        database.initialize(MySQLDatabase(db, user, password, host, port))
+        database.connect()
+        break
+    except:
+        print("Cant connect to DB", traceback.format_exc())
 
 
 def testStr(data):
@@ -140,4 +153,4 @@ if __name__ == '__main__':
             countColl = 0
             picksBefore.append(pick)
 
-    time.sleep(5)
+    parse.__del__()
