@@ -1,7 +1,7 @@
 import datetime
 
 
-class Datas():
+class Pick():
     def __init__(self):
         self.__sport = ""
         self.__event = ""
