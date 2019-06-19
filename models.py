@@ -1,7 +1,6 @@
 from peewee import *
-from Constants.DB import *
 
-database = MySQLDatabase('mydb', **{'charset': 'utf8', 'use_unicode': True, 'host': host, 'user': user, 'password': password})
+database = MySQLDatabase('mydb', **{'charset': 'utf8', 'use_unicode': True, 'host': 'localhost', 'user': 'test', 'password': 'Test_Test123'})
 
 class UnknownField(object):
     def __init__(self, *_, **__): pass
@@ -11,19 +10,12 @@ class BaseModel(Model):
         database = database
 
 class Bookmaker(BaseModel):
-    base_name_bk = CharField(column_name='BaseNameBK')
+    base_name = CharField(column_name='BaseName')
     url = CharField(column_name='URL')
     id_bookmaker = AutoField(column_name='idBookmaker')
 
     class Meta:
         table_name = 'Bookmaker'
-
-class Forecast(BaseModel):
-    data_forecast = CharField(column_name='DataForecast')
-    id_forecast = AutoField(column_name='idForecast')
-
-    class Meta:
-        table_name = 'Forecast'
 
 class Resource(BaseModel):
     name = CharField(column_name='Name')
@@ -48,30 +40,55 @@ class Capper(BaseModel):
         )
         primary_key = CompositeKey('id_capper', 'resource_id_resource')
 
+class Forecast(BaseModel):
+    base_name = CharField(column_name='BaseName')
+    id_forecast = AutoField(column_name='idForecast')
+
+    class Meta:
+        table_name = 'Forecast'
+
+class Ligue(BaseModel):
+    base_name = CharField(column_name='BaseName')
+    code = CharField(column_name='Code', null=True)
+    id_ligue = AutoField(column_name='idLigue')
+
+    class Meta:
+        table_name = 'Ligue'
+
+class Sport(BaseModel):
+    base_name = CharField(column_name='BaseName')
+    code = CharField(column_name='Code', null=True)
+    id_sport = AutoField(column_name='idSport')
+
+    class Meta:
+        table_name = 'Sport'
+
 class Bet(BaseModel):
     bookmaker_id_bookmaker = ForeignKeyField(column_name='Bookmaker_idBookmaker', field='id_bookmaker', model=Bookmaker)
+    capper_resource_id_resource = ForeignKeyField(column_name='Capper_Resource_idResource', field='resource_id_resource', model=Capper)
+    capper_id_capper = ForeignKeyField(backref='Capper_capper_id_capper_set', column_name='Capper_idCapper', field='id_capper', model=Capper)
     forecast_id_forecast = ForeignKeyField(column_name='Forecast_idForecast', field='id_forecast', model=Forecast)
     kf = FloatField(column_name='KF')
+    ligue_id_ligue = ForeignKeyField(column_name='Ligue_idLigue', field='id_ligue', model=Ligue)
     percent = FloatField(column_name='Percent')
-    resource_resource_id_resource = ForeignKeyField(column_name='Resource_Resource_idResource', field='resource_id_resource', model=Capper)
-    resource_id_capper = ForeignKeyField(backref='Capper_resource_id_capper_set', column_name='Resource_idCapper', field='id_capper', model=Capper)
     result = FloatField(column_name='Result', constraints=[SQL("DEFAULT 0")])
-    time_event = DateField(column_name='TimeEvent')
-    time_input = DateField(column_name='TimeInput')
+    sport_id_sport = ForeignKeyField(column_name='Sport_idSport', field='id_sport', model=Sport)
+    time_event = DateField(column_name='TimeEvent', null=True)
+    time_input = DateField(column_name='TimeInput', null=True)
     val_forecast = FloatField(column_name='ValForecast')
     id_bet = IntegerField(column_name='idBet')
 
     class Meta:
         table_name = 'Bet'
         indexes = (
-            (('id_bet', 'resource_id_capper', 'resource_resource_id_resource', 'forecast_id_forecast'), True),
-            (('resource_id_capper', 'resource_resource_id_resource'), False),
+            (('capper_id_capper', 'capper_resource_id_resource'), False),
+            (('id_bet', 'forecast_id_forecast', 'sport_id_sport', 'ligue_id_ligue', 'capper_id_capper', 'capper_resource_id_resource', 'bookmaker_id_bookmaker'), True),
         )
-        primary_key = CompositeKey('forecast_id_forecast', 'id_bet', 'resource_id_capper', 'resource_resource_id_resource')
+        primary_key = CompositeKey('bookmaker_id_bookmaker', 'capper_id_capper', 'capper_resource_id_resource', 'forecast_id_forecast', 'id_bet', 'ligue_id_ligue', 'sport_id_sport')
 
 class BookMakerNames(BaseModel):
     bookmaker_id_bookmaker = ForeignKeyField(column_name='Bookmaker_idBookmaker', field='id_bookmaker', model=Bookmaker)
-    other_name_bk = CharField(column_name='OtherNameBK')
+    other_name = CharField(column_name='OtherName')
     id_book_maker_names = IntegerField(column_name='idBookMakerNames')
 
     class Meta:
@@ -110,9 +127,9 @@ class Descs(BaseModel):
         table_name = 'Descs'
 
 class DescBet(BaseModel):
-    bet_resource_resource_id_resource = ForeignKeyField(column_name='Bet_Resource_Resource_idResource', field='resource_resource_id_resource', model=Bet)
-    bet_resource_id_capper = ForeignKeyField(backref='Bet_bet_resource_id_capper_set', column_name='Bet_Resource_idCapper', field='resource_id_capper', model=Bet)
-    bet_id_bet = ForeignKeyField(backref='Bet_bet_id_bet_set', column_name='Bet_idBet', field='id_bet', model=Bet)
+    bet_resource_resource_id_resource = IntegerField(column_name='Bet_Resource_Resource_idResource')
+    bet_resource_id_capper = IntegerField(column_name='Bet_Resource_idCapper')
+    bet_id_bet = ForeignKeyField(column_name='Bet_idBet', field='id_bet', model=Bet)
     descs_id_descs_bet = ForeignKeyField(column_name='Descs_idDescsBet', field='id_descs_bet', model=Descs)
     id_desc_bet = AutoField(column_name='idDescBet')
 
@@ -175,33 +192,12 @@ class FilterForecast(BaseModel):
             (('filter_id_filter', 'filter_ligue_id_ligue', 'filter_ligue_sport_id_sport'), False),
         )
 
-class Sport(BaseModel):
-    code = CharField(column_name='Code', null=True)
-    name = CharField(column_name='Name')
-    id_sport = AutoField(column_name='idSport')
-
-    class Meta:
-        table_name = 'Sport'
-
-class Ligue(BaseModel):
-    code = CharField(column_name='Code', null=True)
-    name = CharField(column_name='Name')
-    sport_id_sport = ForeignKeyField(column_name='Sport_idSport', field='id_sport', model=Sport)
-    id_ligue = IntegerField(column_name='idLigue')
-
-    class Meta:
-        table_name = 'Ligue'
-        indexes = (
-            (('id_ligue', 'sport_id_sport'), True),
-        )
-        primary_key = CompositeKey('id_ligue', 'sport_id_sport')
-
 class FilterLigue(BaseModel):
     filter_ligue_sport_id_sport = ForeignKeyField(column_name='Filter_Ligue_Sport_idSport', field='ligue_sport_id_sport', model=Filter)
     filter_ligue_id_ligue = ForeignKeyField(backref='Filter_filter_ligue_id_ligue_set', column_name='Filter_Ligue_idLigue', field='ligue_id_ligue', model=Filter)
     filter_id_filter = ForeignKeyField(backref='Filter_filter_id_filter_set', column_name='Filter_idFilter', field='id_filter', model=Filter)
-    ligue_sport_id_sport = ForeignKeyField(column_name='Ligue_Sport_idSport', field='sport_id_sport', model=Ligue)
-    ligue_id_ligue = ForeignKeyField(backref='Ligue_ligue_id_ligue_set', column_name='Ligue_idLigue', field='id_ligue', model=Ligue)
+    ligue_sport_id_sport = IntegerField(column_name='Ligue_Sport_idSport')
+    ligue_id_ligue = ForeignKeyField(column_name='Ligue_idLigue', field='id_ligue', model=Ligue)
     id_filter_ligue = AutoField(column_name='idFilterLigue')
 
     class Meta:
@@ -226,7 +222,7 @@ class FilterSport(BaseModel):
 
 class ForecastNames(BaseModel):
     forecast_id_forecast = ForeignKeyField(column_name='Forecast_idForecast', field='id_forecast', model=Forecast)
-    other_name_f = CharField(column_name='OtherNameF')
+    other_name = CharField(column_name='OtherName')
     id_forecast_names = IntegerField(column_name='idForecastNames')
 
     class Meta:
@@ -237,9 +233,9 @@ class ForecastNames(BaseModel):
         primary_key = CompositeKey('forecast_id_forecast', 'id_forecast_names')
 
 class LigueNames(BaseModel):
-    ligue_sport_id_sport = ForeignKeyField(column_name='Ligue_Sport_idSport', field='sport_id_sport', model=Ligue)
-    ligue_id_ligue = ForeignKeyField(backref='Ligue_ligue_id_ligue_set', column_name='Ligue_idLigue', field='id_ligue', model=Ligue)
-    other_name_ligue = CharField(column_name='OtherNameLigue')
+    ligue_sport_id_sport = IntegerField(column_name='Ligue_Sport_idSport')
+    ligue_id_ligue = ForeignKeyField(column_name='Ligue_idLigue', field='id_ligue', model=Ligue)
+    other_name = CharField(column_name='OtherName')
     id_ligue_names = IntegerField(column_name='idLigueNames')
 
     class Meta:
@@ -264,7 +260,7 @@ class ResourceCommand(BaseModel):
         primary_key = CompositeKey('id_resource_command', 'resource_id_resource')
 
 class SportNames(BaseModel):
-    other_name_sport = CharField(column_name='OtherNameSport')
+    other_name = CharField(column_name='OtherName')
     sport_id_sport = ForeignKeyField(column_name='Sport_idSport', field='id_sport', model=Sport)
     id_sport_names = IntegerField(column_name='idSportNames')
 
@@ -277,32 +273,18 @@ class SportNames(BaseModel):
 
 class Team(BaseModel):
     base_name = CharField(column_name='BaseName')
-    ligue_sport_id_sport = ForeignKeyField(column_name='Ligue_Sport_idSport', field='sport_id_sport', model=Ligue)
-    ligue_id_ligue = ForeignKeyField(backref='Ligue_ligue_id_ligue_set', column_name='Ligue_idLigue', field='id_ligue', model=Ligue)
-    id_team = IntegerField(column_name='idTeam')
+    id_team = AutoField(column_name='idTeam')
 
     class Meta:
         table_name = 'Team'
-        indexes = (
-            (('id_team', 'ligue_id_ligue', 'ligue_sport_id_sport'), True),
-            (('ligue_id_ligue', 'ligue_sport_id_sport'), False),
-        )
-        primary_key = CompositeKey('id_team', 'ligue_id_ligue', 'ligue_sport_id_sport')
 
 class TeamBet(BaseModel):
-    bet_resource_resource_id_resource = ForeignKeyField(column_name='Bet_Resource_Resource_idResource', field='resource_resource_id_resource', model=Bet)
-    bet_resource_id_capper = ForeignKeyField(backref='Bet_bet_resource_id_capper_set', column_name='Bet_Resource_idCapper', field='resource_id_capper', model=Bet)
-    bet_id_bet = ForeignKeyField(backref='Bet_bet_id_bet_set', column_name='Bet_idBet', field='id_bet', model=Bet)
-    team_team_names_id_team_names = IntegerField(column_name='Team_TeamNames_idTeamNames')
+    bet_id_bet = ForeignKeyField(column_name='Bet_idBet', field='id_bet', model=Bet)
     team_id_team = ForeignKeyField(column_name='Team_idTeam', field='id_team', model=Team)
     id_team_bet = AutoField(column_name='idTeamBet')
 
     class Meta:
         table_name = 'TeamBet'
-        indexes = (
-            (('bet_id_bet', 'bet_resource_id_capper', 'bet_resource_resource_id_resource'), False),
-            (('team_id_team', 'team_team_names_id_team_names'), False),
-        )
 
 class TeamNames(BaseModel):
     other_name = CharField(column_name='OtherName')
@@ -334,8 +316,8 @@ class UserBet(BaseModel):
     bet_forecast_id_forecast = ForeignKeyField(column_name='Bet_Forecast_idForecast', field='forecast_id_forecast', model=Bet)
     bet_ligue_sport_id_sport = IntegerField(column_name='Bet_Ligue_Sport_idSport')
     bet_ligue_id_ligue = IntegerField(column_name='Bet_Ligue_idLigue')
-    bet_resource_resource_id_resource = ForeignKeyField(backref='Bet_bet_resource_resource_id_resource_set', column_name='Bet_Resource_Resource_idResource', field='resource_resource_id_resource', model=Bet)
-    bet_resource_id_capper = ForeignKeyField(backref='Bet_bet_resource_id_capper_set', column_name='Bet_Resource_idCapper', field='resource_id_capper', model=Bet)
+    bet_resource_resource_id_resource = IntegerField(column_name='Bet_Resource_Resource_idResource')
+    bet_resource_id_capper = IntegerField(column_name='Bet_Resource_idCapper')
     bet_id_bet = ForeignKeyField(backref='Bet_bet_id_bet_set', column_name='Bet_idBet', field='id_bet', model=Bet)
     filter_capper_id_filter_capper = ForeignKeyField(column_name='FilterCapper_idFilterCapper', field='id_filter_capper', model=FilterCapper)
     real_kf = FloatField(column_name='RealKF')
@@ -346,7 +328,7 @@ class UserBet(BaseModel):
     class Meta:
         table_name = 'UserBet'
         indexes = (
-            (('bet_id_bet', 'bet_resource_id_capper', 'bet_resource_resource_id_resource', 'bet_forecast_id_forecast'), False),
+            (('bet_id_bet', 'bet_forecast_id_forecast'), False),
             (('bet_id_bet', 'bet_resource_id_capper', 'bet_resource_resource_id_resource', 'bet_ligue_id_ligue', 'bet_ligue_sport_id_sport', 'bet_forecast_id_forecast'), False),
         )
 

@@ -1,29 +1,11 @@
 import datetime
-import time
-import traceback
 
-from Picks import Pick
 from DynamicWebParse.DynamicWebParse import DynamicWebParse
 from DynamicWebParse.Requests import Requests
-from models import *
 from Constants.CommandsParse import *
-from BaseFunction import *
+from Constants.DBFunctions import *
 
 driver = '/home/az/ProjectsData/Drivers/chromedriver'
-
-def getAllCapper():
-    return Capper.select()
-
-def getResourceByID(id):
-    return Resource.select().where(Resource.id_resource == id)
-
-def getAllCommandResource(id):
-    return ResourceCommand.select().where(ResourceCommand.resource_id_resource == id)
-
-def getCommandResourceByName(resource, command):
-    return ResourceCommand.select().where(ResourceCommand.resource_id_resource == resource.id_resource \
-                                          and ResourceCommand.desc == command)
-
 
 def generateLink(capper, resource):
     return resource.url + "/" + ("" if capper.prev_data == "" else (capper.prev_data + "/")) + \
@@ -36,11 +18,9 @@ def getTypeByNameResource(resourceName):
             return name['class']
     return None
 
-
-
 if __name__ == '__main__':
     parse = DynamicWebParse(driver)
-    parse.makeVisibleDriver()
+    parse.makeUnvisibleDriver()
 
     requests = Requests(parse.getDriver())
 
@@ -54,7 +34,9 @@ if __name__ == '__main__':
         resourceCommand = getCommandResourceByName(resource, ClassGet.picks)[0]
         requests.allwaysLoadPage(link + resourceCommand.data + "/")
 
-        ClassGet.parsePicks(self=ClassGet, requests=requests)
+        picks = ClassGet.parsePicks(self=ClassGet, requests=requests)
+        for pick in picks:
+            addBet(capper, pick)
 
         resourceCommand = getCommandResourceByName(resource, ClassGet.archive)[0]
         requests.allwaysLoadPage(link + resourceCommand.data + "/" + str(datetime.datetime.now().year) + "-" + str(datetime.datetime.now().month) + "/")

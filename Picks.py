@@ -16,6 +16,42 @@ class Pick():
         self.__descs = list()
         self.__result = 0.0
 
+    def getBookmaker(self):
+        return self.__bookmaker
+
+    def getForecast(self):
+        return self.__forecast
+
+    def getSport(self):
+        return self.__sport
+
+    def getEvent(self):
+        return self.__event
+
+    def getFirstTeam(self):
+        return self.__firstTeam
+
+    def getSecondTeam(self):
+        return self.__secondTeam
+
+    def getForecast(self):
+        return self.__forecast
+
+    def getPercent(self):
+        return self.__percent
+
+    def getKF(self):
+        return self.__kf
+
+    def getTimeInput(self):
+        return self.__timeInput
+
+    def getTimeEvent(self):
+        return self.__timeEvent
+
+    def getResult(self):
+        return self.__result
+
     def isValid(self):
         return self.__sport != "" and \
                 self.__event != "" and \
