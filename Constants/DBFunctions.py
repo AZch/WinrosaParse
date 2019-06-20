@@ -56,13 +56,12 @@ def getBase(baseClass, idBase, classRet, classRetForeigen):
 def getBet(pick, capper, valForecast, forecastDB, bk, sport, ligue,
            teamHome, teamAway, nowCreate):
     bet = Bet.select().where(Bet.percent == float(pick.getPercent()),
-                             Bet.result == float(pick.getResult()),
                              Bet.capper_id_capper == capper.id_capper,
                              Bet.val_forecast == float(valForecast),
                              Bet.forecast_id_forecast == forecastDB.id_forecast,
                              Bet.bookmaker_id_bookmaker == bk.id_bookmaker,
                              Bet.sport_id_sport == sport.id_sport,
-                             Bet.ligue_id_ligue == ligue.id_ligue,
+                             Bet.ligue_id_ligue != -1 if ligue is None else Bet.ligue_id_ligue == ligue.id_ligue,
                              Bet.time_event == pick.getTimeEvent(),
                              Bet.time_input == pick.getTimeInput())
 
@@ -89,12 +88,16 @@ def addBet(capper, pick):
     except:
         pass
 
-    ligue = findWithName(pick.getEvent(), Ligue, LigueNames,
-                         "CANT FIND LIGUE: " + pick.getEvent())
-    try:
-        ligue = getBase(Ligue, Ligue.id_ligue, ligue, ligue.ligue_id_ligue)
-    except:
-        pass
+    if pick.getEvent() != '':
+        ligue = findWithName(pick.getEvent(), Ligue, LigueNames,
+                             "CANT FIND LIGUE: " + pick.getEvent())
+        try:
+            ligue = getBase(Ligue, Ligue.id_ligue, ligue, ligue.ligue_id_ligue)
+        except:
+            pass
+    else:
+        ligue = None
+
 
     teamHome = findWithName(pick.getFirstTeam(), Team, TeamNames,
                             "CANT FIND TEAM: " + pick.getFirstTeam())
@@ -124,13 +127,13 @@ def addBet(capper, pick):
     except:
         pass
 
-    valForecast = re.findall('\d+\.\d+|\d+', pick.getForecast())[0]
+    numsForecast = re.findall('\d+\.\d+|\d+', pick.getForecast())
+    valForecast = -1 if len(numsForecast) == 0 else numsForecast[0]
 
     bet = getBet(pick, capper, valForecast, forecastDB, bk, sport, ligue, teamHome, teamAway, False)
 
-    if bet == None:
-        now = datetime.datetime.now()
-        Bet.create(percent=float(pick.getPercent()), kf=float(pick.getKF()), result=float(pick.getResult()),
+    if bet == None and ligue != None:
+        Bet.create(percent=float(pick.getPercent()), kf=float(pick.getKF()),
                    capper_id_capper=capper.id_capper, val_forecast=float(valForecast),
                    forecast_id_forecast=forecastDB.id_forecast, bookmaker_id_bookmaker=bk.id_bookmaker,
                    sport_id_sport=sport.id_sport, ligue_id_ligue=ligue.id_ligue,
@@ -139,4 +142,9 @@ def addBet(capper, pick):
         bet = getBet(pick, capper, valForecast, forecastDB, bk, sport, ligue, teamHome, teamAway, True)
         TeamBet.create(team_id_team=teamHome.id_team, bet_id_bet=bet.id_bet)
         TeamBet.create(team_id_team=teamAway.id_team, bet_id_bet=bet.id_bet)
+    elif bet != None:
+        if bet.result == None:
+            bet = bet.get()
+            bet.result = pick.getResult()
+            bet.save()
     return bet

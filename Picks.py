@@ -14,7 +14,7 @@ class Pick():
         self.__timeInput = None
         self.__timeEvent = None
         self.__descs = list()
-        self.__result = 0.0
+        self.__result = None
 
     def getBookmaker(self):
         return self.__bookmaker
@@ -54,7 +54,6 @@ class Pick():
 
     def isValid(self):
         return self.__sport != "" and \
-                self.__event != "" and \
                 self.__firstTeam != "" and \
                 self.__secondTeam != "" and \
                 self.__forecast != "" and \

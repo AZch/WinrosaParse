@@ -109,7 +109,7 @@ class Beton():
             else :
                 if countColl == 0:
                     pick = Pick()
-                    pick.setEvent(elem.text)
+                    #pick.setEvent(elem.text)
                     countColl += 1
                 elif countColl == 1:
                     pick.setSport(elem.text)
