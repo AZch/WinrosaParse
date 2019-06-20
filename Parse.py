@@ -20,7 +20,8 @@ def getTypeByNameResource(resourceName):
 
 if __name__ == '__main__':
     parse = DynamicWebParse(driver)
-    parse.makeUnvisibleDriver()
+    parse.makeVisibleDriver()
+    oldClassGet = None
 
     requests = Requests(parse.getDriver())
 
@@ -31,14 +32,24 @@ if __name__ == '__main__':
 
         ClassGet = getTypeByNameResource(resource.name)
 
-        resourceCommand = getCommandResourceByName(resource, ClassGet.picks)[0]
-        requests.allwaysLoadPage(link + resourceCommand.data + "/")
+        requests.allwaysLoadPage(link)
+
+        # if type(ClassGet) != type(oldClassGet):
+        #     ClassGet.makePreAction(ClassGet, requests, ("artem.atyakshev", "ItsHard2Me"))
+
+
+        requests.allwaysLoadPage(ClassGet.makeLinkArchive(ClassGet, link, datetime.datetime.now()))
+
+        ClassGet.parseArchive(self=ClassGet, requests=requests)
+
+        requests.allwaysLoadPage(ClassGet.makeLinkPicks(ClassGet, link))
 
         picks = ClassGet.parsePicks(self=ClassGet, requests=requests)
         for pick in picks:
             addBet(capper, pick)
 
-        resourceCommand = getCommandResourceByName(resource, ClassGet.archive)[0]
-        requests.allwaysLoadPage(link + resourceCommand.data + "/" + str(datetime.datetime.now().year) + "-" + str(datetime.datetime.now().month) + "/")
+        requests.allwaysLoadPage(ClassGet.makeLinkArchive(ClassGet, link, datetime.datetime.now()))
 
         ClassGet.parseArchive(self=ClassGet, requests=requests)
+
+        oldClassGet = ClassGet

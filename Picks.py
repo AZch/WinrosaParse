@@ -95,11 +95,11 @@ class Pick():
         else:
             return datetime.datetime.now() + datetime.timedelta(days=day) + datetime.timedelta(hours=hour) + datetime.timedelta(minutes=minute)
 
-    def setTimeInput(self, day, hour, minute):
-        self.__timeInput = self.getTimeFromNow(day, hour, minute, True)
+    def setTimeInput(self, date):
+        self.__timeInput = date
 
-    def setTimeEvent(self, day, hour, minute):
-        self.__timeEvent = self.getTimeFromNow(day, hour, minute, False)
+    def setTimeEvent(self, date):
+        self.__timeEvent = date
 
     def addDesc(self, desc):
         if isinstance(desc, str):

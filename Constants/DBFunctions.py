@@ -55,15 +55,16 @@ def getBase(baseClass, idBase, classRet, classRetForeigen):
 
 def getBet(pick, capper, valForecast, forecastDB, bk, sport, ligue,
            teamHome, teamAway, nowCreate):
-    bet = Bet.select().where(Bet.percent == pick.getPercent(),
-                             Bet.kf == pick.getKF(),
-                             Bet.result == pick.getResult(),
+    bet = Bet.select().where(Bet.percent == float(pick.getPercent()),
+                             Bet.result == float(pick.getResult()),
                              Bet.capper_id_capper == capper.id_capper,
-                             Bet.val_forecast == valForecast,
+                             Bet.val_forecast == float(valForecast),
                              Bet.forecast_id_forecast == forecastDB.id_forecast,
                              Bet.bookmaker_id_bookmaker == bk.id_bookmaker,
                              Bet.sport_id_sport == sport.id_sport,
-                             Bet.ligue_id_ligue == ligue.id_ligue)
+                             Bet.ligue_id_ligue == ligue.id_ligue,
+                             Bet.time_event == pick.getTimeEvent(),
+                             Bet.time_input == pick.getTimeInput())
 
     try:
         bet = bet[0]
@@ -129,11 +130,12 @@ def addBet(capper, pick):
 
     if bet == None:
         now = datetime.datetime.now()
-        Bet.create(percent=float(pick.getPercent()), kf=pick.getKF(), result=pick.getResult(),
-                   capper_id_capper=capper.id_capper, val_forecast=valForecast,
+        Bet.create(percent=float(pick.getPercent()), kf=float(pick.getKF()), result=float(pick.getResult()),
+                   capper_id_capper=capper.id_capper, val_forecast=float(valForecast),
                    forecast_id_forecast=forecastDB.id_forecast, bookmaker_id_bookmaker=bk.id_bookmaker,
                    sport_id_sport=sport.id_sport, ligue_id_ligue=ligue.id_ligue,
-                   capper_resource_id_resource=capper.resource_id_resource)
+                   capper_resource_id_resource=capper.resource_id_resource,
+                   time_event=pick.getTimeEvent(), time_input=pick.getTimeInput())
         bet = getBet(pick, capper, valForecast, forecastDB, bk, sport, ligue, teamHome, teamAway, True)
         TeamBet.create(team_id_team=teamHome.id_team, bet_id_bet=bet.id_bet)
         TeamBet.create(team_id_team=teamAway.id_team, bet_id_bet=bet.id_bet)

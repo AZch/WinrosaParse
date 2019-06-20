@@ -11,7 +11,7 @@ class BaseModel(Model):
 
 class Bookmaker(BaseModel):
     base_name = CharField(column_name='BaseName')
-    url = CharField(column_name='URL')
+    url = CharField(column_name='URL', null=True)
     id_bookmaker = AutoField(column_name='idBookmaker')
 
     class Meta:
@@ -68,14 +68,14 @@ class Bet(BaseModel):
     capper_resource_id_resource = ForeignKeyField(column_name='Capper_Resource_idResource', field='resource_id_resource', model=Capper)
     capper_id_capper = ForeignKeyField(backref='Capper_capper_id_capper_set', column_name='Capper_idCapper', field='id_capper', model=Capper)
     forecast_id_forecast = ForeignKeyField(column_name='Forecast_idForecast', field='id_forecast', model=Forecast)
-    kf = FloatField(column_name='KF')
+    kf = CharField(column_name='KF')
     ligue_id_ligue = ForeignKeyField(column_name='Ligue_idLigue', field='id_ligue', model=Ligue)
-    percent = FloatField(column_name='Percent')
-    result = FloatField(column_name='Result', constraints=[SQL("DEFAULT 0")])
+    percent = CharField(column_name='Percent')
+    result = CharField(column_name='Result', constraints=[SQL("DEFAULT '0.0'")])
     sport_id_sport = ForeignKeyField(column_name='Sport_idSport', field='id_sport', model=Sport)
-    time_event = DateField(column_name='TimeEvent', null=True)
-    time_input = DateField(column_name='TimeInput', null=True)
-    val_forecast = FloatField(column_name='ValForecast')
+    time_event = DateTimeField(column_name='TimeEvent')
+    time_input = DateTimeField(column_name='TimeInput')
+    val_forecast = CharField(column_name='ValForecast')
     id_bet = IntegerField(column_name='idBet')
 
     class Meta:
