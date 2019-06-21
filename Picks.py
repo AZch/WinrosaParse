@@ -16,6 +16,9 @@ class Pick():
         self.__descs = list()
         self.__result = None
 
+    def getDescs(self):
+        return self.__descs
+
     def getBookmaker(self):
         return self.__bookmaker
 

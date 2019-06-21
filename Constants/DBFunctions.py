@@ -1,6 +1,8 @@
 import datetime
 
 from models import *
+from peewee import fn
+from Picks import Pick
 import re
 
 
@@ -43,8 +45,6 @@ def findWithName(name, baseClass, otherClass, msg):
 
 def getBase(baseClass, idBase, classRet, classRetForeigen):
     if classRet is not None:
-        test1 = type(baseClass)
-        test1 = type(classRet)
         if type(baseClass) == type(classRet):
             return classRet
         else:
@@ -54,7 +54,7 @@ def getBase(baseClass, idBase, classRet, classRetForeigen):
 
 
 def getBet(pick, capper, valForecast, forecastDB, bk, sport, ligue,
-           teamHome, teamAway, nowCreate):
+           teamHome, teamAway, nowCreate, descsBet):
     bet = Bet.select().where(Bet.percent == float(pick.getPercent()),
                              Bet.capper_id_capper == capper.id_capper,
                              Bet.val_forecast == float(valForecast),
@@ -69,15 +69,65 @@ def getBet(pick, capper, valForecast, forecastDB, bk, sport, ligue,
         bet = bet[0]
         if bet.id_bet != None:
             teamBets = TeamBet.select().where(TeamBet.bet_id_bet == bet.id_bet)
-            if nowCreate and len(teamBets) == 0:
+            descBet = DescBet.select().where(DescBet.bet_id_bet == bet.id_bet)
+            if nowCreate and len(teamBets) == 0 and len(descBet) == 0:
                 return bet
             for teamBet in teamBets:
                 if teamBet.team_id_team != teamHome.id_team and \
                         teamBet.team_id_team != teamAway.id_team:
                     return bet
+            for desc in descBet:
+                isFind = False
+                for descBase in descsBet:
+                    if desc.desc_id_desc == descBase.id_desc:
+                        isFind = True
+                        break
+                if not isFind:
+                    return None
     except:
         pass
     return None
+
+
+def getBetById(id):
+    return Bet.select().where(Bet.id_bet == id).get()
+
+def getLastInputResultBetForCupper(capper):
+    try:
+        betResults = Bet.select().where(Bet.capper_id_capper == capper.id_capper,
+                                        Bet.result is not None)
+        betDate = Bet.select(fn.MAX(Bet.time_input)).where(Bet.id_bet == betResults)
+        return Bet.select().where(Bet.time_input == betDate, Bet.id_bet == betResults)
+    except:
+        return None
+
+def getDataById(id, Data, DataId):
+    return Data.select().where(DataId == id)
+
+def BetToPick(bet):
+    pick = None
+    if bet is not None:
+        pick = Pick()
+        setBase = lambda data: data.base_name if data is not None else None
+        pick.setTimeEvent(bet.time_event)
+        pick.setTimeInput(bet.time_input)
+        pick.setResult(bet.result)
+        buf = getDataById(bet.bookmaker_id_bookmaker, Bookmaker, Bookmaker.id_bookmaker).get()
+        pick.setBookmaker(setBase(buf))
+        pick.setKF(bet.kf)
+        pick.setPercent(bet.percent)
+        forecast = getDataById(bet.forecast_id_forecast, Forecast, Forecast.id_forecast).get()
+        pick.setForecast((forecast.base_name + bet.val_forecast) if forecast is not None else None)
+        teamBets = TeamBet.select().where(TeamBet.bet_id_bet == bet.id_bet)
+        buf = getDataById(teamBets[0].team_id_team, Team, Team.id_team).get()
+        pick.setFirstTeam(setBase(buf))
+        buf = getDataById(teamBets[1].team_id_team, Team, Team.id_team).get()
+        pick.setSecondTeam(setBase(buf))
+        buf = getDataById(bet.sport_id_sport, Sport, Sport.id_sport)
+        pick.setSport(setBase(buf))
+        buf = getDataById(bet.ligue_id_ligue, Ligue, Ligue.id_ligue)
+        pick.setEvent(setBase(buf))
+    return pick
 
 
 def addBet(capper, pick):
@@ -97,7 +147,6 @@ def addBet(capper, pick):
             pass
     else:
         ligue = None
-
 
     teamHome = findWithName(pick.getFirstTeam(), Team, TeamNames,
                             "CANT FIND TEAM: " + pick.getFirstTeam())
@@ -130,21 +179,31 @@ def addBet(capper, pick):
     numsForecast = re.findall('\d+\.\d+|\d+', pick.getForecast())
     valForecast = -1 if len(numsForecast) == 0 else numsForecast[0]
 
-    bet = getBet(pick, capper, valForecast, forecastDB, bk, sport, ligue, teamHome, teamAway, False)
+    descsBet = list()
+    for desc in pick.getDescs():
+        descBet = findWithName(desc, Descs, DescsNames,
+                          "CANT FIND DESC: " + desc)
+        try:
+            descBet = getBase(Descs, Descs.id_descs_bet, descBet, descBet.descs_id_descs_bet)
+        except:
+            pass
+        descsBet.append(descBet)
 
-    if bet == None and ligue != None:
-        Bet.create(percent=float(pick.getPercent()), kf=float(pick.getKF()),
-                   capper_id_capper=capper.id_capper, val_forecast=float(valForecast),
-                   forecast_id_forecast=forecastDB.id_forecast, bookmaker_id_bookmaker=bk.id_bookmaker,
-                   sport_id_sport=sport.id_sport, ligue_id_ligue=ligue.id_ligue,
-                   capper_resource_id_resource=capper.resource_id_resource,
-                   time_event=pick.getTimeEvent(), time_input=pick.getTimeInput())
-        bet = getBet(pick, capper, valForecast, forecastDB, bk, sport, ligue, teamHome, teamAway, True)
+    bet = getBet(pick, capper, valForecast, forecastDB, bk, sport, ligue, teamHome, teamAway, False, descsBet)
+
+    if bet is None and ligue is not None:
+        bet = getBetById(Bet.insert(percent=float(pick.getPercent()), kf=float(pick.getKF()),
+                                    capper_id_capper=capper.id_capper, val_forecast=float(valForecast),
+                                    forecast_id_forecast=forecastDB.id_forecast, bookmaker_id_bookmaker=bk.id_bookmaker,
+                                    sport_id_sport=sport.id_sport, ligue_id_ligue=ligue.id_ligue,
+                                    time_event=pick.getTimeEvent(), time_input=pick.getTimeInput()).execute())
+
         TeamBet.create(team_id_team=teamHome.id_team, bet_id_bet=bet.id_bet)
         TeamBet.create(team_id_team=teamAway.id_team, bet_id_bet=bet.id_bet)
-    elif bet != None:
-        if bet.result == None:
-            bet = bet.get()
-            bet.result = pick.getResult()
-            bet.save()
+        for desc in descsBet:
+            DescBet.create(bet_id_bet=bet.id_bet, descs_id_descs_bet=desc.id_descs_bet)
+    elif bet is not None:
+        if bet.result is None and pick.getResult() is not None:
+            query = Bet.update(result=pick.getResult()).where(Bet.id_bet == bet.id_bet)
+            query.execute()
     return bet

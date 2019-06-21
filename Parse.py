@@ -1,4 +1,5 @@
 import datetime
+import random
 
 from DynamicWebParse.DynamicWebParse import DynamicWebParse
 from DynamicWebParse.Requests import Requests
@@ -25,26 +26,29 @@ if __name__ == '__main__':
 
     requests = Requests(parse.getDriver())
 
-    cappers = getAllCapper()
-    for capper in cappers:
-        resource = getResourceByID(capper.resource_id_resource)[0]
-        link = generateLink(capper, resource)
+    while True:
 
-        ClassGet = getTypeByNameResource(resource.name)
+        cappers = getAllCapper()
+        for capper in cappers:
+            resource = getResourceByID(capper.resource_id_resource)[0]
+            link = generateLink(capper, resource)
 
-        requests.allwaysLoadPage(link)
+            ClassGet = getTypeByNameResource(resource.name)
 
-        # if type(ClassGet) != type(oldClassGet):
-        #     ClassGet.makePreAction(ClassGet, requests, ("artem.atyakshev", "ItsHard2Me"))
+            requests.allwaysLoadPage(link)
 
-        requests.allwaysLoadPage(ClassGet.makeLinkPicks(ClassGet, link))
+            # if type(ClassGet) != type(oldClassGet):
+            #     ClassGet.makePreAction(ClassGet, requests, ("artem.atyakshev", "ItsHard2Me"))
 
-        for pick in ClassGet.parsePicks(self=ClassGet, requests=requests):
-            addBet(capper, pick)
+            requests.allwaysLoadPage(ClassGet.makeLinkPicks(ClassGet, link))
 
-        requests.allwaysLoadPage(ClassGet.makeLinkArchive(ClassGet, link, datetime.datetime.now()))
+            for pick in ClassGet.parsePicks(self=ClassGet, requests=requests):
+                addBet(capper, pick)
 
-        for pick in ClassGet.parseArchive(self=ClassGet, requests=requests):
-            addBet(capper, pick)
+            requests.allwaysLoadPage(ClassGet.makeLinkArchive(ClassGet, link, datetime.datetime.now()))
 
-        oldClassGet = ClassGet
+            for pick in ClassGet.parseArchive(self=ClassGet, requests=requests, lastBet=getLastInputResultBetForCupper(capper)):
+                addBet(capper, pick)
+
+            oldClassGet = ClassGet
+        time.sleep(random.randint(15, 20) * 60)

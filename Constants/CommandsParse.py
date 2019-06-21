@@ -2,7 +2,7 @@ import datetime
 import re
 import time
 
-from selenium.webdriver.common.keys import Keys
+from Constants.DBFunctions import getLastInputResultBetForCupper
 
 from Picks import Pick
 from BaseFunction import *
@@ -96,12 +96,19 @@ class Beton():
         print("Parse time: " + str(time.time() - timeStart))
         return picks
 
-    def parseArchive(self, requests):
+    def parseArchive(self, requests, lastBet):
         timeStart = time.time()
         countColl = 0
 
         picksBefore = list()
         pick = Pick()
+        compareDate = lambda dateFirst, dateSec: dateFirst is not None and dateSec is not None and \
+                                                 dateFirst.replace() == dateSec.replace()
+        compareTeam = lambda team, pickCompare: pickCompare is not None and \
+                                                pickCompare.getFirstTeam() is not None and \
+                                                pickCompare.getSecondTeam() is not None and \
+                                                (team.strip() == pickCompare.getFirstTeam().strip() or
+                                                 team.strip() == pickCompare.getSecondTeam().strip())
         oldStyle = ''
         for elem in requests.getElems(self.xpathArchive):
             if elem.get_attribute("class") == 'tte':
@@ -137,6 +144,12 @@ class Beton():
                 elif countColl == 7:
                     pick.setResult(elem.text[:-1])
                     countColl = 0
+                    if lastBet is not None and pick.getSport() == lastBet.getSport() and \
+                            compareDate(pick.getTimeEvent(), lastBet.getTimeEvent()) and \
+                            compareDate(pick.getTimeInput(), lastBet.getTimeInput()) and \
+                            compareTeam(pick.getFirstTeam(), lastBet) and \
+                            compareTeam(pick.getSecondTeam(), lastBet):
+                        break
                     appendPick(pick, picksBefore)
         print("Parse time: " + str(time.time() - timeStart))
         return picksBefore
