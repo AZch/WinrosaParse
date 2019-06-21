@@ -14,7 +14,10 @@ class Pick():
         self.__timeInput = None
         self.__timeEvent = None
         self.__descs = list()
-        self.__result = 0.0
+        self.__result = None
+
+    def getDescs(self):
+        return self.__descs
 
     def getBookmaker(self):
         return self.__bookmaker
@@ -54,7 +57,6 @@ class Pick():
 
     def isValid(self):
         return self.__sport != "" and \
-                self.__event != "" and \
                 self.__firstTeam != "" and \
                 self.__secondTeam != "" and \
                 self.__forecast != "" and \
@@ -95,11 +97,11 @@ class Pick():
         else:
             return datetime.datetime.now() + datetime.timedelta(days=day) + datetime.timedelta(hours=hour) + datetime.timedelta(minutes=minute)
 
-    def setTimeInput(self, day, hour, minute):
-        self.__timeInput = self.getTimeFromNow(day, hour, minute, True)
+    def setTimeInput(self, date):
+        self.__timeInput = date
 
-    def setTimeEvent(self, day, hour, minute):
-        self.__timeEvent = self.getTimeFromNow(day, hour, minute, False)
+    def setTimeEvent(self, date):
+        self.__timeEvent = date
 
     def addDesc(self, desc):
         if isinstance(desc, str):

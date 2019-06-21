@@ -1,4 +1,5 @@
 import datetime
+import random
 
 from DynamicWebParse.DynamicWebParse import DynamicWebParse
 from DynamicWebParse.Requests import Requests
@@ -21,24 +22,33 @@ def getTypeByNameResource(resourceName):
 if __name__ == '__main__':
     parse = DynamicWebParse(driver)
     parse.makeUnvisibleDriver()
+    oldClassGet = None
 
     requests = Requests(parse.getDriver())
 
-    cappers = getAllCapper()
-    for capper in cappers:
-        resource = getResourceByID(capper.resource_id_resource)[0]
-        link = generateLink(capper, resource)
+    while True:
 
-        ClassGet = getTypeByNameResource(resource.name)
+        cappers = getAllCapper()
+        for capper in cappers:
+            resource = getResourceByID(capper.resource_id_resource)[0]
+            link = generateLink(capper, resource)
 
-        resourceCommand = getCommandResourceByName(resource, ClassGet.picks)[0]
-        requests.allwaysLoadPage(link + resourceCommand.data + "/")
+            ClassGet = getTypeByNameResource(resource.name)
 
-        picks = ClassGet.parsePicks(self=ClassGet, requests=requests)
-        for pick in picks:
-            addBet(capper, pick)
+            requests.allwaysLoadPage(link)
 
-        resourceCommand = getCommandResourceByName(resource, ClassGet.archive)[0]
-        requests.allwaysLoadPage(link + resourceCommand.data + "/" + str(datetime.datetime.now().year) + "-" + str(datetime.datetime.now().month) + "/")
+            # if type(ClassGet) != type(oldClassGet):
+            #     ClassGet.makePreAction(ClassGet, requests, ("artem.atyakshev", "ItsHard2Me"))
 
-        ClassGet.parseArchive(self=ClassGet, requests=requests)
+            requests.allwaysLoadPage(ClassGet.makeLinkPicks(ClassGet, link))
+
+            for pick in ClassGet.parsePicks(self=ClassGet, requests=requests):
+                addBet(capper, pick)
+
+            requests.allwaysLoadPage(ClassGet.makeLinkArchive(ClassGet, link, datetime.datetime.now()))
+
+            for pick in ClassGet.parseArchive(self=ClassGet, requests=requests, lastBet=getLastInputResultBetForCupper(capper)):
+                addBet(capper, pick)
+
+            oldClassGet = ClassGet
+        time.sleep(random.randint(15, 20) * 60)
