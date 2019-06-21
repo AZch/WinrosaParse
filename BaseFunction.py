@@ -5,13 +5,22 @@ def appendPick(pick, picks):
         picks.append(pick)
 
 def testStr(data):
-    return data if isinstance(str(data), str) else ""
+    try:
+        return str(data)
+    except:
+        return ""
 
 def testFloat(data):
-    return data if isinstance(float(data), float) else 0.0
+    try:
+        return float(data)
+    except:
+        return 0.0
 
 def testInt(data):
-    return data if isinstance(int(data), int) else 0
+    try:
+        return int(data)
+    except:
+        return 0
 
 
 def parseHourMinute(data):

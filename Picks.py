@@ -86,10 +86,10 @@ class Pick():
         self.__bookmaker = bookmaker
 
     def setPercent(self, percent):
-        self.__percent = percent
+        self.__percent = float(percent)
 
     def setKF(self, kf):
-        self.__kf = kf
+        self.__kf = float(kf)
 
     def getTimeFromNow(self, day, hour, minute, isBefore):
         if isBefore:

@@ -2,10 +2,10 @@ import datetime
 import re
 import time
 
-from Picks import Pick
 from BaseFunction import *
-from Constants.Words import *
 from CommandParse.IResourceParse import IResourceParse
+from Constants.Words import *
+from Picks import Pick
 
 
 class BetonParse(IResourceParse):
@@ -68,9 +68,9 @@ class BetonParse(IResourceParse):
             elif className == 'outcome tte':
                 pick.setForecast(elem.text)
             elif className == 'stake':
-                pick.setPercent(elem.text[:-1])
+                pick.setPercent(testFloat(elem.text[:-1]))
             elif className == 'odds':
-                pick.setKF(elem.text)
+                pick.setKF(testFloat(elem.text))
             elif className == 'book':
                 pick.setBookmaker(elem.text)
             elif className == 'header_inactive':
@@ -122,16 +122,16 @@ class BetonParse(IResourceParse):
                     pick.setForecast(elem.text)
                     countColl += 1
                 elif countColl == 4:
-                    pick.setPercent(elem.text[:-1])
+                    pick.setPercent(testFloat(elem.text[:-1]))
                     countColl += 1
                 elif countColl == 5:
-                    pick.setKF(elem.text)
+                    pick.setKF(testFloat(elem.text))
                     countColl += 1
                 elif countColl == 6:
                     pick.setBookmaker(elem.text)
                     countColl += 1
                 elif countColl == 7:
-                    pick.setResult(elem.text[:-1])
+                    pick.setResult(testFloat(elem.text[:-1]))
                     countColl = 0
                     if lastBet is not None and pick.getSport() == lastBet.getSport() and \
                             compareDate(pick.getTimeEvent(), lastBet.getTimeEvent()) and \

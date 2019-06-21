@@ -1,9 +1,8 @@
-import datetime
+import re
+
+from peewee import fn
 
 from models import *
-from peewee import fn
-from Picks import Pick
-import re
 
 
 def getAllCapper():
@@ -12,15 +11,6 @@ def getAllCapper():
 
 def getResourceByID(id):
     return Resource.select().where(Resource.id_resource == id)
-
-
-def getAllCommandResource(id):
-    return ResourceCommand.select().where(ResourceCommand.resource_id_resource == id)
-
-
-def getCommandResourceByName(resource, command):
-    return ResourceCommand.select().where(ResourceCommand.resource_id_resource == resource.id_resource \
-                                          and ResourceCommand.desc == command)
 
 
 def findWithName(name, baseClass, otherClass, msg):
@@ -45,19 +35,19 @@ def findWithName(name, baseClass, otherClass, msg):
 
 def getBase(baseClass, idBase, classRet, classRetForeigen):
     if classRet is not None:
-        if type(baseClass) == type(classRet):
+        if not hasattr(classRet, classRetForeigen):
             return classRet
         else:
-            return baseClass.select().where(idBase == classRetForeigen).get()
+            return baseClass.select().where(idBase == getattr(classRet, classRetForeigen)).get()
     else:
         return None
 
 
 def getBet(pick, capper, valForecast, forecastDB, bk, sport, ligue,
            teamHome, teamAway, nowCreate, descsBet):
-    bet = Bet.select().where(Bet.percent == float(pick.getPercent()),
+    bet = Bet.select().where(Bet.percent == pick.getPercent(),
                              Bet.capper_id_capper == capper.id_capper,
-                             Bet.val_forecast == float(valForecast),
+                             Bet.val_forecast == valForecast,
                              Bet.forecast_id_forecast == forecastDB.id_forecast,
                              Bet.bookmaker_id_bookmaker == bk.id_bookmaker,
                              Bet.sport_id_sport == sport.id_sport,
@@ -105,69 +95,41 @@ def getDataById(id, Data, DataId):
     return Data.select().where(DataId == id)
 
 def addBet(capper, pick):
-    sport = findWithName(pick.getSport(), Sport, SportNames,
-                         "CANT FIND SPORT: " + pick.getSport())
-    try:
-        sport = getBase(Sport, Sport.id_sport, sport, sport.sport_id_sport)
-    except:
-        pass
+    sport = getBase(Sport, Sport.id_sport, findWithName(pick.getSport(), Sport, SportNames,
+                     "CANT FIND SPORT: " + pick.getSport()), "sport_id_sport")
 
     if pick.getEvent() != '':
-        ligue = findWithName(pick.getEvent(), Ligue, LigueNames,
-                             "CANT FIND LIGUE: " + pick.getEvent())
-        try:
-            ligue = getBase(Ligue, Ligue.id_ligue, ligue, ligue.ligue_id_ligue)
-        except:
-            pass
+        ligue = getBase(Ligue, Ligue.id_ligue, findWithName(pick.getEvent(), Ligue, LigueNames,
+                         "CANT FIND LIGUE: " + pick.getEvent()), "ligue_id_ligue")
     else:
         ligue = None
 
-    teamHome = findWithName(pick.getFirstTeam(), Team, TeamNames,
-                            "CANT FIND TEAM: " + pick.getFirstTeam())
-    try:
-        teamHome = getBase(Team, Team.id_team, teamHome, teamHome.team_id_team)
-    except:
-        pass
+    teamHome = getBase(Team, Team.id_team, findWithName(pick.getFirstTeam(), Team, TeamNames,
+                        "CANT FIND TEAM: " + pick.getFirstTeam()), "team_id_team")
 
-    teamAway = findWithName(pick.getSecondTeam(), Team, TeamNames,
-                            "CANT FIND TEAM: " + pick.getSecondTeam())
-    try:
-        teamAway = getBase(Team, Team.id_team, teamAway, teamAway.team_id_team)
-    except:
-        pass
+    teamAway = getBase(Team, Team.id_team, findWithName(pick.getSecondTeam(), Team, TeamNames,
+                        "CANT FIND TEAM: " + pick.getSecondTeam()), "team_id_team")
 
-    bk = findWithName(pick.getBookmaker(), Bookmaker, BookMakerNames,
-                      "CANT FIND BK: " + pick.getBookmaker())
-    try:
-        bk = getBase(Bookmaker, Bookmaker.id_bookmaker, bk, bk.bookmaker_id_bookmaker)
-    except:
-        pass
+    bk = getBase(Bookmaker, Bookmaker.id_bookmaker, findWithName(pick.getBookmaker(), Bookmaker, BookMakerNames,
+                  "CANT FIND BK: " + pick.getBookmaker()), "bookmaker_id_bookmaker")
 
-    forecastDB = findWithName("".join(re.findall('[a-zA-Zа-яА-Я]+', pick.getForecast())),
-                              Forecast, ForecastNames, "CANT FIND FORECAST: " + pick.getForecast(), )
-    try:
-        forecastDB = getBase(Forecast, Forecast.id_forecast, forecastDB, forecastDB.forecast_id_forecast)
-    except:
-        pass
+    forecastDB = getBase(Forecast, Forecast.id_forecast, findWithName("".join(re.findall('[a-zA-Zа-яА-Я]+', pick.getForecast())),
+                          Forecast, ForecastNames, "CANT FIND FORECAST: " + pick.getForecast()), "forecast_id_forecast")
 
     numsForecast = re.findall('\d+\.\d+|\d+', pick.getForecast())
-    valForecast = -1 if len(numsForecast) == 0 else numsForecast[0]
+    valForecast = float(-1 if len(numsForecast) == 0 else numsForecast[0])
 
     descsBet = list()
     for desc in pick.getDescs():
-        descBet = findWithName(desc, Descs, DescsNames,
-                          "CANT FIND DESC: " + desc)
-        try:
-            descBet = getBase(Descs, Descs.id_descs_bet, descBet, descBet.descs_id_descs_bet)
-        except:
-            pass
+        descBet = getBase(Descs, Descs.id_descs_bet, findWithName(desc, Descs, DescsNames,
+                      "CANT FIND DESC: " + desc), "descs_id_descs_bet")
         descsBet.append(descBet)
 
     bet = getBet(pick, capper, valForecast, forecastDB, bk, sport, ligue, teamHome, teamAway, False, descsBet)
 
     if bet is None and ligue is not None:
-        bet = getBetById(Bet.insert(percent=float(pick.getPercent()), kf=float(pick.getKF()),
-                                    capper_id_capper=capper.id_capper, val_forecast=float(valForecast),
+        bet = getBetById(Bet.insert(percent=pick.getPercent(), kf=pick.getKF(),
+                                    capper_id_capper=capper.id_capper, val_forecast=valForecast,
                                     forecast_id_forecast=forecastDB.id_forecast, bookmaker_id_bookmaker=bk.id_bookmaker,
                                     sport_id_sport=sport.id_sport, ligue_id_ligue=ligue.id_ligue,
                                     time_event=pick.getTimeEvent(), time_input=pick.getTimeInput()).execute())
@@ -177,7 +139,7 @@ def addBet(capper, pick):
         for desc in descsBet:
             DescBet.create(bet_id_bet=bet.id_bet, descs_id_descs_bet=desc.id_descs_bet)
     elif bet is not None:
-        if bet.result is None and pick.getResult() is not None:
-            query = Bet.update(result=pick.getResult()).where(Bet.id_bet == bet.id_bet)
+        if bet.result is None and pick.getResult() is not None and pick.getKF() is not None:
+            query = Bet.update(result=pick.getResult(), kf=pick.getKF()).where(Bet.id_bet == bet.id_bet)
             query.execute()
     return bet
