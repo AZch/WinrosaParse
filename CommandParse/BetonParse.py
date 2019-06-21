@@ -1,6 +1,5 @@
 import datetime
 import re
-import time
 
 from BaseFunction import *
 from CommandParse.IResourceParse import IResourceParse
@@ -43,13 +42,11 @@ class BetonParse(IResourceParse):
         return baseLink + self.archive + "/" + str(date.year) + "-" + str(date.month) + "/"
 
     def parsePicks(self, requests):
-        timeStart = time.time()
         picks = list()
         pick = Pick()
         oldStyle = ''
         for elem in requests.getElems(self.xpathPicks):
             className = elem.get_attribute("class")
-            print(elem.text)
             if className == 'starts':
                 pick, oldStyle = self.setPickData(self, "Событие:", "Введено:", pick, elem, requests, oldStyle)
             if className == 'sport tte soc':
@@ -76,11 +73,9 @@ class BetonParse(IResourceParse):
             elif className == 'header_inactive':
                 break
         appendPick(pick, picks)
-        print("Parse time: " + str(time.time() - timeStart))
         return picks
 
     def parseArchive(self, requests, lastBet=None):
-        timeStart = time.time()
         countColl = 0
 
         picksBefore = list()
@@ -140,7 +135,6 @@ class BetonParse(IResourceParse):
                             compareTeam(pick.getSecondTeam(), lastBet):
                         break
                     appendPick(pick, picksBefore)
-        print("Parse time: " + str(time.time() - timeStart))
         return picksBefore
 
     def getDate(self, prevWord, baseStr):
