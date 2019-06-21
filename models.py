@@ -22,14 +22,16 @@ class Resource(BaseModel):
     type_get = CharField(column_name='TypeGet')
     url = CharField(column_name='URL')
     id_resource = AutoField(column_name='idResource')
+    login = CharField(null=True)
+    password = CharField(null=True)
 
     class Meta:
         table_name = 'Resource'
 
 class Capper(BaseModel):
     personal_data = CharField(column_name='PersonalData')
-    post_data = CharField(column_name='PostData')
-    prev_data = CharField(column_name='PrevData')
+    post_data = CharField(column_name='PostData', constraints=[SQL("DEFAULT ''")], null=True)
+    prev_data = CharField(column_name='PrevData', constraints=[SQL("DEFAULT ''")], null=True)
     resource_id_resource = ForeignKeyField(column_name='Resource_idResource', field='id_resource', model=Resource)
     id_capper = IntegerField(column_name='idCapper')
 
@@ -267,19 +269,6 @@ class LigueNames(BaseModel):
             (('ligue_id_ligue', 'ligue_sport_id_sport'), False),
         )
         primary_key = CompositeKey('id_ligue_names', 'ligue_id_ligue', 'ligue_sport_id_sport')
-
-class ResourceCommand(BaseModel):
-    data = CharField(column_name='Data')
-    desc = CharField(column_name='Desc')
-    resource_id_resource = ForeignKeyField(column_name='Resource_idResource', field='id_resource', model=Resource)
-    id_resource_command = IntegerField(column_name='idResourceCommand')
-
-    class Meta:
-        table_name = 'ResourceCommand'
-        indexes = (
-            (('id_resource_command', 'resource_id_resource'), True),
-        )
-        primary_key = CompositeKey('id_resource_command', 'resource_id_resource')
 
 class SportNames(BaseModel):
     other_name = CharField(column_name='OtherName')
