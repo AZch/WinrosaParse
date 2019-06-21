@@ -1,10 +1,11 @@
-import datetime
 import random
+import time
 
 from DynamicWebParse.DynamicWebParse import DynamicWebParse
 from DynamicWebParse.Requests import Requests
 from Constants.CommandsParse import *
 from Constants.DBFunctions import *
+from Utils.DBConvUtils import BetToPick
 
 driver = '/home/az/ProjectsData/Drivers/chromedriver'
 
@@ -20,6 +21,7 @@ def getTypeByNameResource(resourceName):
     return None
 
 if __name__ == '__main__':
+    startTime = time.time()
     parse = DynamicWebParse(driver)
     parse.makeUnvisibleDriver()
     oldClassGet = None
@@ -38,7 +40,7 @@ if __name__ == '__main__':
             requests.allwaysLoadPage(link)
 
             # if type(ClassGet) != type(oldClassGet):
-            #     ClassGet.makePreAction(ClassGet, requests, ("artem.atyakshev", "ItsHard2Me"))
+            #     ClassGet.makePreAction(ClassGet, requests, (resource.login, resource.password))
 
             requests.allwaysLoadPage(ClassGet.makeLinkPicks(ClassGet, link))
 
@@ -47,8 +49,9 @@ if __name__ == '__main__':
 
             requests.allwaysLoadPage(ClassGet.makeLinkArchive(ClassGet, link, datetime.datetime.now()))
 
-            for pick in ClassGet.parseArchive(self=ClassGet, requests=requests, lastBet=getLastInputResultBetForCupper(capper)):
+            for pick in ClassGet.parseArchive(self=ClassGet, requests=requests, lastBet=BetToPick(getLastInputResultBetForCupper(capper))):
                 addBet(capper, pick)
 
             oldClassGet = ClassGet
         time.sleep(random.randint(15, 20) * 60)
+        print("TIME WORK: " + str(time.time() - startTime))
