@@ -1,10 +1,10 @@
-import datetime
 import re
 
 from BaseFunction import *
 from CommandParse.IResourceParse import IResourceParse
 from Constants.Words import *
 from Picks import Pick
+from Utils.TimeUtils import *
 
 
 class BetonParse(IResourceParse):
@@ -48,7 +48,7 @@ class BetonParse(IResourceParse):
         for elem in requests.getElems(self.xpathPicks):
             className = elem.get_attribute("class")
             if className == 'starts':
-                pick, oldStyle = self.setPickData(self, "Событие:", "Введено:", pick, elem, requests, oldStyle)
+                pick, oldStyle = self.setPickData(self, "Событие:", "Введено:", pick, elem, requests, oldStyle, True)
             if className == 'sport tte soc':
                 appendPick(pick, picks)
                 pick = Pick()
@@ -90,7 +90,7 @@ class BetonParse(IResourceParse):
         oldStyle = ''
         for elem in requests.getElems(self.xpathArchive):
             if elem.get_attribute("class") == 'tte':
-                pick, oldStyle = self.setPickData(self, 'Началось:', 'Введено:', pick, elem, requests, oldStyle)
+                pick, oldStyle = self.setPickData(self, 'Началось:', 'Введено:', pick, elem, requests, oldStyle, True)
             else:
                 if countColl == 0:
                     pick = Pick()
@@ -147,13 +147,21 @@ class BetonParse(IResourceParse):
         while oldStyle == elem.get_attribute('style'): continue
         return elem.get_attribute('style')
 
-    def setPickData(self, strEvent, strInput, pick, elem, requests, oldStyle):
+    def setPickData(self, strEvent, strInput, pick, elem, requests, oldStyle, needWait):
         requests.moveToElem(elem)
-        oldStyle = self.waitDate(self, requests, oldStyle)
-        for dateElem in requests.getElems("//*[@class='date_hint']/table/tbody/tr"):
-            dateText = dateElem.text
-            if strInput in dateText:
-                pick.setTimeInput(self.getDate(self, strInput, dateText))
-            elif strEvent in dateText:
-                pick.setTimeEvent(self.getDate(self, strEvent, dateText))
-        return pick, oldStyle
+        try:
+            if needWait:
+                oldStyle = self.waitDate(self=self, requests=requests, oldStyle=oldStyle)
+                sleepBySecond(0.05)
+                requests.moveToElem(elem)
+            for dateElem in requests.getElems("//*[@class='date_hint']/table/tbody/tr"):
+                dateText = dateElem.text
+                if strInput in dateText:
+                    pick.setTimeInput(self.getDate(self=self, prevWord=strInput, baseStr=dateText))
+                elif strEvent in dateText:
+                    pick.setTimeEvent(self.getDate(self=self, prevWord=strEvent, baseStr=dateText))
+            if pick.getTimeEvent() is None or pick.getTimeInput() is None:
+                return self.setPickData(self, strEvent, strInput, pick, elem, requests, oldStyle, False)
+            return pick, oldStyle
+        except:
+            return self.setPickData(self, strEvent, strInput, pick, elem, requests, oldStyle, False)

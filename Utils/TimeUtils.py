@@ -16,3 +16,6 @@ def endTrackTime():
 
 def getDateTimeNow():
     return datetime.datetime.now()
+
+def sleepBySecond(second=0.1):
+    time.sleep(second)

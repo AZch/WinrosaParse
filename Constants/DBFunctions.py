@@ -1,7 +1,5 @@
 import re
 
-from peewee import fn
-
 from models import *
 
 
@@ -84,15 +82,16 @@ def getBetById(id):
 
 def getLastInputResultBetForCupper(capper):
     try:
-        betResults = Bet.select().where(Bet.capper_id_capper == capper.id_capper,
-                                        Bet.result is not None)
-        betDate = Bet.select(fn.MAX(Bet.time_input)).where(Bet.id_bet == betResults)
-        return Bet.select().where(Bet.time_input == betDate, Bet.id_bet == betResults).get()
+        betDate = Bet.select(fn.MAX(Bet.time_input)).where(Bet.capper_id_capper == capper.id_capper,
+                                                            Bet.result != None)
+        res = Bet.select().where(Bet.time_input == betDate, Bet.capper_id_capper == capper.id_capper,
+                                                            Bet.result != None)
+        return res.get()
     except:
         return None
 
 def getDataById(id, Data, DataId):
-    return Data.select().where(DataId == id)
+    return Data.select().where(DataId == id).get()
 
 def addBet(capper, pick):
     sport = getBase(Sport, Sport.id_sport, findWithName(pick.getSport(), Sport, SportNames,
