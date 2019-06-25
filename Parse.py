@@ -5,8 +5,8 @@ from DynamicWebParse.Requests import Requests
 
 from Constants.CommandsParse import *
 from Constants.DBFunctions import *
+from Constants.FilterInterval import *
 from Utils.DBConvUtils import BetToPick
-from Utils.TimeUtils import *
 
 driver = '/home/az/ProjectsData/Drivers/chromedriver'
 
@@ -27,11 +27,31 @@ if __name__ == '__main__':
     oldClassGet = None
 
     requests = Requests(parse.getDriver())
+    filters = ''
 
     while True:
 
         cappers = getAllCapper()
         for capper in cappers:
+            filters = getFiltersForCapper(capper)
+            for filter in filters:
+                filter.bookmaker = getFilterData(filter, FilterBookmaker, FilterBookmaker.bookmaker_id_bookmaker,
+                                         Bookmaker, Bookmaker.id_bookmaker)
+                filter.sport = getFilterData(filter, FilterSport, FilterSport.sport_id_sport,
+                                                Sport, Sport.id_sport)
+                filter.forecast = getFilterData(filter, FilterForecast, FilterForecast.filter_id_filter,
+                                                Forecast, Forecast.id_forecast)
+                filter.ligue = getFilterData(filter, FilterLigue, FilterLigue.ligue_id_ligue,
+                                             Ligue, Ligue.id_ligue)
+                filter.team = getFilterData(filter, FilterTeam, FilterTeam.team_id_team,
+                                            Team, Team.id_team)
+                filter.dataFilter = getFilterData(filter, FilterData, FilterData.data_bet_id_data_bet,
+                                                  DataBet, DataBet.id_data_bet)
+                for data in filter.dataFilter:
+                    data = AllFilters[getDataById(data.type_data_bet_id_type_data_bet,
+                                                  TypeDataBet,
+                                                  TypeDataBet.id_type_data_bet).type_code](data.start, data.end)
+
             resource = getResourceByID(capper.resource_id_resource)[0]
             link = generateLink(capper, resource)
 
@@ -46,7 +66,7 @@ if __name__ == '__main__':
 
             startTrackTime()
             for pick in ClassGet.parsePicks(self=ClassGet, requests=requests):
-                addBet(capper, pick)
+                addBet(capper, pick, filters)
             print("End parse current: " + str(endTrackTime()))
 
             requests.allwaysLoadPage(ClassGet.makeLinkArchive(ClassGet, link, getDateTimeNow()))
@@ -56,6 +76,6 @@ if __name__ == '__main__':
                 addBet(capper, pick)
             print("End parse archive: " + str(endTrackTime()))
 
-            oldClassGet = ClassGet
-        time.sleep(random.randint(15, 20) * 60)
+            #oldClassGet = ClassGet
         print("TIME WORK: " + str(getTimeWork()))
+        time.sleep(random.randint(15, 20) * 60)

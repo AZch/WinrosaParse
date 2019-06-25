@@ -52,6 +52,7 @@ class BetonParse(IResourceParse):
             if className == 'sport tte soc':
                 appendPick(pick, picks)
                 pick = Pick()
+                requests.moveToElem(elem)
                 pick.setSport(elem.text)
             elif className == 'location':
                 pick.setEvent(elem.text.split('\n')[1])
@@ -97,6 +98,7 @@ class BetonParse(IResourceParse):
                     # pick.setEvent(elem.text)
                     countColl += 1
                 elif countColl == 1:
+                    requests.moveToElem(elem)
                     pick.setSport(elem.text)
                     countColl += 1
                 elif countColl == 2:
@@ -152,7 +154,6 @@ class BetonParse(IResourceParse):
         try:
             if needWait:
                 oldStyle = self.waitDate(self=self, requests=requests, oldStyle=oldStyle)
-                sleepBySecond(0.05)
                 requests.moveToElem(elem)
             for dateElem in requests.getElems("//*[@class='date_hint']/table/tbody/tr"):
                 dateText = dateElem.text

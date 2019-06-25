@@ -93,7 +93,7 @@ def getLastInputResultBetForCupper(capper):
 def getDataById(id, Data, DataId):
     return Data.select().where(DataId == id).get()
 
-def addBet(capper, pick):
+def addBet(capper, pick, filters=None):
     sport = getBase(Sport, Sport.id_sport, findWithName(pick.getSport(), Sport, SportNames,
                      "CANT FIND SPORT: " + pick.getSport()), "sport_id_sport")
 
@@ -125,6 +125,7 @@ def addBet(capper, pick):
         descsBet.append(descBet)
 
     bet = getBet(pick, capper, valForecast, forecastDB, bk, sport, ligue, teamHome, teamAway, False, descsBet)
+    
 
     if bet is None and ligue is not None:
         bet = getBetById(Bet.insert(percent=pick.getPercent(), kf=pick.getKF(),
@@ -142,3 +143,18 @@ def addBet(capper, pick):
             query = Bet.update(result=pick.getResult(), kf=pick.getKF()).where(Bet.id_bet == bet.id_bet)
             query.execute()
     return bet
+
+def getFilterData(filter, DataFilter, DataFilterId, Data, DataId):
+    return Data.select(Data)\
+        .join(DataFilter)\
+        .where(DataFilter.filter_id_filter == filter.id_filter,
+               DataFilterId == DataId)
+
+def getFiltersForCapper(capper):
+    return Filter.select(Filter)\
+        .join(UserFilter)\
+        .join(FilterCapper)\
+        .where(
+            FilterCapper.capper_id_capper == capper.id_capper,
+            FilterCapper.user_filter_id_user_filter == UserFilter.id_user_filter,
+            UserFilter.filter_id_filter == Filter.id_filter)
