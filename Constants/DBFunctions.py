@@ -1,5 +1,3 @@
-import re
-
 from models import *
 
 
@@ -93,7 +91,7 @@ def getLastInputResultBetForCupper(capper):
 def getDataById(id, Data, DataId):
     return Data.select().where(DataId == id).get()
 
-def addBet(capper, pick, filters=None):
+def addBet(capper, pick, isArchive, filters=None):
     sport = getBase(Sport, Sport.id_sport, findWithName(pick.getSport(), Sport, SportNames,
                      "CANT FIND SPORT: " + pick.getSport()), "sport_id_sport")
 
@@ -112,11 +110,11 @@ def addBet(capper, pick, filters=None):
     bk = getBase(Bookmaker, Bookmaker.id_bookmaker, findWithName(pick.getBookmaker(), Bookmaker, BookMakerNames,
                   "CANT FIND BK: " + pick.getBookmaker()), "bookmaker_id_bookmaker")
 
-    forecastDB = getBase(Forecast, Forecast.id_forecast, findWithName("".join(re.findall('[a-zA-Zа-яА-Я]+', pick.getForecast())),
-                          Forecast, ForecastNames, "CANT FIND FORECAST: " + pick.getForecast()), "forecast_id_forecast")
+    forecastDB = getBase(Forecast, Forecast.id_forecast, findWithName(pick.getForecast(), Forecast, ForecastNames,
+                                                                      "CANT FIND FORECAST: " + pick.getForecast()),
+                         "forecast_id_forecast")
 
-    numsForecast = re.findall('\d+\.\d+|\d+', pick.getForecast())
-    valForecast = float(-1 if len(numsForecast) == 0 else numsForecast[0])
+    valForecast = pick.getValForecast()
 
     descsBet = list()
     for desc in pick.getDescs():
@@ -127,7 +125,7 @@ def addBet(capper, pick, filters=None):
     bet = getBet(pick, capper, valForecast, forecastDB, bk, sport, ligue, teamHome, teamAway, False, descsBet)
     
 
-    if bet is None and ligue is not None:
+    if bet is None and not isArchive:
         bet = getBetById(Bet.insert(percent=pick.getPercent(), kf=pick.getKF(),
                                     capper_id_capper=capper.id_capper, val_forecast=valForecast,
                                     forecast_id_forecast=forecastDB.id_forecast, bookmaker_id_bookmaker=bk.id_bookmaker,

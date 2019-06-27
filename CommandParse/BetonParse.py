@@ -35,13 +35,15 @@ class BetonParse(IResourceParse):
         requests.sendKeysGetElem("//*[@id='user_password_id_module']", data[1])
         requests.getElem("//*[@class='auth_button']").submit()
 
-    def makeLinkPicks(self, baseLink):
-        return baseLink + self.picks + "/"
+    def makeLinkPicks(self, baseLink, data=None):
+        #return baseLink + self.picks + "/"
+        return 'https://octopustipster.blogabet.com/'
 
     def makeLinkArchive(self, baseLink, date=None):
         return baseLink + self.archive + "/" + str(date.year) + "-" + str(date.month) + "/"
 
     def parsePicks(self, requests):
+
         picks = list()
         pick = Pick()
         oldStyle = ''
@@ -64,7 +66,9 @@ class BetonParse(IResourceParse):
             elif className == 'event_aux':
                 pick.addDesc(elem.text)
             elif className == 'outcome tte':
-                pick.setForecast(elem.text)
+                numsForecast = re.findall(' \d+\.\d+| \d+', elem.text)
+                pick.setValForecast(float(0 if len(numsForecast) == 0 else numsForecast[0]).strip())
+                pick.setForecast(elem.text.replace(str(pick.getValForecast()), "").strip())
             elif className == 'stake':
                 pick.setPercent(testFloat(elem.text[:-1]))
             elif className == 'odds':

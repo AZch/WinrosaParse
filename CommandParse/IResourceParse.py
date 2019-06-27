@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 class IResourceParse(ABC):
     @abstractmethod
-    def makeLinkPicks(self, baseLink):
+    def makeLinkPicks(self, baseLink, data=None):
         pass
 
     @abstractmethod

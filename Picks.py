@@ -8,6 +8,7 @@ class Pick():
         self.__firstTeam = ""
         self.__secondTeam = ""
         self.__forecast = ""
+        self.__valForecast = 0.0
         self.__percent = 0.0
         self.__kf = 0.0
         self.__bookmaker = ""
@@ -15,6 +16,9 @@ class Pick():
         self.__timeEvent = None
         self.__descs = list()
         self.__result = None
+
+    def getValForecast(self):
+        return self.__valForecast
 
     def getDescs(self):
         return self.__descs
@@ -99,6 +103,9 @@ class Pick():
 
     def setTimeInput(self, date):
         self.__timeInput = date
+
+    def setValForecast(self, val):
+        self.__valForecast = float(val)
 
     def setTimeEvent(self, date):
         self.__timeEvent = date

@@ -66,14 +66,14 @@ if __name__ == '__main__':
 
             startTrackTime()
             for pick in ClassGet.parsePicks(self=ClassGet, requests=requests):
-                addBet(capper, pick, filters)
+                addBet(capper, pick, False, filters)
             print("End parse current: " + str(endTrackTime()))
 
             requests.allwaysLoadPage(ClassGet.makeLinkArchive(ClassGet, link, getDateTimeNow()))
 
             startTrackTime()
             for pick in ClassGet.parseArchive(self=ClassGet, requests=requests, lastBet=BetToPick(getLastInputResultBetForCupper(capper))):
-                addBet(capper, pick)
+                addBet(capper, pick, True)
             print("End parse archive: " + str(endTrackTime()))
 
             #oldClassGet = ClassGet

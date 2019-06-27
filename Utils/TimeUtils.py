@@ -20,5 +20,8 @@ def getDateTimeNow():
 def dateTimeByStr(string):
     return datetime.datetime(string)
 
+def dateByDayMonthYearHourMinute(day, month, year, hour, minute):
+    return datetime.datetime(year, month, day, hour, minute)
+
 def sleepBySecond(second=0.1):
     time.sleep(second)
