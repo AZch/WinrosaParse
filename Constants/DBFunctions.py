@@ -1,3 +1,4 @@
+from Constants.FilterInterval import AllFilters, AllFiltersCode
 from models import *
 
 
@@ -140,14 +141,75 @@ def addBet(capper, pick, isArchive, filters=None):
 
         TeamBet.create(team_id_team=teamHome.id_team, bet_id_bet=bet.id_bet)
         TeamBet.create(team_id_team=teamAway.id_team, bet_id_bet=bet.id_bet)
+        calcDataFilter = lambda classType, start, end, val: classType(start, end).calc(val)
         for desc in descsBet:
             DescBet.create(bet_id_bet=bet.id_bet, descs_id_descs_bet=desc.id_descs_bet)
         for filter in filters:
-            pass
+            if len(getFilterData(filter, FilterBookmaker, FilterBookmaker.bookmaker_id_bookmaker,
+                                         Bookmaker, Bookmaker.id_bookmaker)) > 0 and \
+                    len(getFilterDataForId(filter, FilterBookmaker, FilterBookmaker.bookmaker_id_bookmaker,
+                                         Bookmaker, Bookmaker.id_bookmaker, bk.id_bookmaker)) == 0:
+                continue
+            if len(getFilterData(filter, FilterSport, FilterSport.sport_id_sport,
+                                                Sport, Sport.id_sport)) > 0 and  \
+                    len(getFilterDataForId(filter, FilterSport, FilterSport.sport_id_sport,
+                                                Sport, Sport.id_sport, sport.id_sport)) == 0:
+                continue
+            if len(getFilterData(filter, FilterForecast, FilterForecast.filter_id_filter,
+                                                Forecast, Forecast.id_forecast)) > 0 and \
+                    len(getFilterDataForId(filter, FilterForecast, FilterForecast.filter_id_filter,
+                                                Forecast, Forecast.id_forecast, forecastDB.id_forecast)) == 0:
+                continue
+            if len(getFilterData(filter, FilterLigue, FilterLigue.ligue_id_ligue,
+                                             Ligue, Ligue.id_ligue)) > 0 and \
+                    len(getFilterDataForId(filter, FilterLigue, FilterLigue.ligue_id_ligue,
+                                             Ligue, Ligue.id_ligue, ligue.id_ligue)) == 0:
+                continue
+            if len(getFilterData(filter, FilterTeam, FilterTeam.team_id_team,
+                                            Team, Team.id_team)) > 0 and \
+                    len(getFilterDataForId(filter, FilterTeam, FilterTeam.team_id_team,
+                                            Team, Team.id_team)) == 0:
+                continue
+            isSend = True
+            for data in filter.dataFilter:
+                dataFilter = getDataById(data.type_data_bet_id_type_data_bet,
+                                              TypeDataBet,
+                                              TypeDataBet.id_type_data_bet)
+                for code in AllFiltersCode:
+                    if dataFilter.type_code == code:
+                        if not calcDataFilter(AllFilters[dataFilter.type_code],
+                                              data.start, data.end,
+                                              pick.getDataForCode(code)):
+                            isSend = False
+                            break
+                if not isSend:
+                    break
+            if not isSend:
+                continue
+            #
+            # ОТПРАВКА СООБЩЕНИЯ
+            for userFilter in UserFilter.select().where(UserFilter.filter_id_filter == filter.id_filter):
+                filterCapper = FilterCapper.select().where(FilterCapper.user_filter_id_user_filter == userFilter.id_user_filter,
+                                                           FilterCapper.capper_id_capper == capper.id_capper).get()
+                print(filterCapper.channel)
+                UserBet.create(bet_id_bet=bet.id_bet,
+                               filter_capper_id_filter_capper=filterCapper.id_filter_capper)
+            #
+
     elif bet is not None:
         if bet.result is None and pick.getResult() is not None and pick.getKF() is not None:
             query = Bet.update(result=pick.getResult(), kf=pick.getKF()).where(Bet.id_bet == bet.id_bet)
             query.execute()
+            print(bet)
+            userBets = UserBet.select().where(UserBet.bet_id_bet == bet.id_bet)
+            for userBet in userBets:
+                userFilter = UserFilter\
+                    .select()\
+                    .join(FilterCapper)\
+                    .where(FilterCapper.user_filter_id_user_filter == UserFilter.id_user_filter,
+                           userBet.filter_capper_id_filter_capper == FilterCapper.id_filter_capper)
+                # отправка данных результата userBet есть и userFilter тоже
+                print("RESULT:", str(len(userFilter)), str(userFilter.get().channel))
     return bet
 
 def getFilterDataForId(filter, DataFilter, DataFilterId, Data, DataId, idSearch):

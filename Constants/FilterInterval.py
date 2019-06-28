@@ -30,6 +30,7 @@ class DateTimeInterval(interval):
         return dateTimeByStr(val)
 
     def calc(self, val):
+        val = self.convert(val)
         if self.__end__ is not None and \
                 self.__end__ <= val:
             return False
@@ -46,6 +47,7 @@ class FloatInterval(interval):
         return testFloat(val)
 
     def calc(self, val):
+        val = self.convert(val)
         if self.__end__ is not None and \
                 self.__end__ <= val:
             return False
@@ -62,6 +64,7 @@ class IntInterval(interval):
         return testInt(val)
 
     def calc(self, val):
+        val = self.convert(val)
         if self.__end__ is not None and \
                 self.__end__ <= val:
             return False
@@ -70,9 +73,16 @@ class IntInterval(interval):
             return False
         return True
 
+AllFiltersCode = [
+    'TimeEvent',
+    'TimeInput',
+    'KF',
+    'Percent'
+]
+
 AllFilters = {
-    'TimeEvent': DateTimeInterval,
-    'TimeInput': DateTimeInterval,
-    'KF': FloatInterval,
-    'Percent': FloatInterval
+    AllFiltersCode[0]: DateTimeInterval,
+    AllFiltersCode[1]: DateTimeInterval,
+    AllFiltersCode[2]: FloatInterval,
+    AllFiltersCode[3]: FloatInterval
 }

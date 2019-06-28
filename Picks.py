@@ -1,5 +1,7 @@
 import datetime
 
+from Constants.FilterInterval import AllFiltersCode
+
 
 class Pick():
     def __init__(self):
@@ -113,3 +115,13 @@ class Pick():
     def addDesc(self, desc):
         if isinstance(desc, str):
             self.__descs.append(desc)
+
+    def getDataForCode(self, code):
+        if code == AllFiltersCode[0]:
+            return self.__timeEvent
+        elif code == AllFiltersCode[1]:
+            return self.__timeInput
+        elif code == AllFiltersCode[2]:
+            return self.__kf
+        elif code == AllFiltersCode[3]:
+            return self.__percent

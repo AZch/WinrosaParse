@@ -37,22 +37,6 @@ if __name__ == '__main__':
             filtersData = list()
             for filter in filters:
                 filter.users = getUserForFilter(filter)
-                filter.bk = getFilterData(filter, FilterBookmaker, FilterBookmaker.bookmaker_id_bookmaker,
-                                         Bookmaker, Bookmaker.id_bookmaker)
-                filter.sport = getFilterData(filter, FilterSport, FilterSport.sport_id_sport,
-                                                Sport, Sport.id_sport)
-                filter.forecast = getFilterData(filter, FilterForecast, FilterForecast.filter_id_filter,
-                                                Forecast, Forecast.id_forecast)
-                filter.ligue = getFilterData(filter, FilterLigue, FilterLigue.ligue_id_ligue,
-                                             Ligue, Ligue.id_ligue)
-                filter.team = getFilterData(filter, FilterTeam, FilterTeam.team_id_team,
-                                            Team, Team.id_team)
-                filter.dataFilter = getFilterData(filter, FilterData, FilterData.data_bet_id_data_bet,
-                                                  DataBet, DataBet.id_data_bet)
-                for data in filter.dataFilter:
-                    data = AllFilters[getDataById(data.type_data_bet_id_type_data_bet,
-                                                  TypeDataBet,
-                                                  TypeDataBet.id_type_data_bet).type_code](data.start, data.end)
 
             resource = getResourceByID(capper.resource_id_resource)[0]
             link = generateLink(capper, resource)
