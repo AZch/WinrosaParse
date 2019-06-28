@@ -136,6 +136,7 @@ def addBet(capper, pick, isArchive, filters=None):
         TeamBet.create(team_id_team=teamAway.id_team, bet_id_bet=bet.id_bet)
         for desc in descsBet:
             DescBet.create(bet_id_bet=bet.id_bet, descs_id_descs_bet=desc.id_descs_bet)
+
     elif bet is not None:
         if bet.result is None and pick.getResult() is not None and pick.getKF() is not None:
             query = Bet.update(result=pick.getResult(), kf=pick.getKF()).where(Bet.id_bet == bet.id_bet)

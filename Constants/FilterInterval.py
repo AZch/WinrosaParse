@@ -31,10 +31,10 @@ class DateTimeInterval(interval):
 
     def calc(self, val):
         if self.__end__ is not None and \
-                self.__end__ < val:
+                self.__end__ <= val:
             return False
         if self.__start__ is not None and \
-                self.__start__ > val:
+                self.__start__ >= val:
             return False
         return True
 
@@ -47,10 +47,26 @@ class FloatInterval(interval):
 
     def calc(self, val):
         if self.__end__ is not None and \
-                self.__end__ < val:
+                self.__end__ <= val:
             return False
         if self.__start__ is not None and \
-                self.__start__ > val:
+                self.__start__ >= val:
+            return False
+        return True
+
+class IntInterval(interval):
+    def __init__(self, start, end):
+        interval.__init__(self, start, end)
+
+    def convert(self, val):
+        return testInt(val)
+
+    def calc(self, val):
+        if self.__end__ is not None and \
+                self.__end__ <= val:
+            return False
+        if self.__start__ is not None and \
+                self.__start__ >= val:
             return False
         return True
 

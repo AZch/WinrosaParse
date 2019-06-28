@@ -21,6 +21,15 @@ def getTypeByNameResource(resourceName):
             return name['class']
     return None
 
+class AllFilterData():
+    users = list()
+    filtersData = list()
+    filterBk = list()
+    filterSport = list()
+    filterLigue = list()
+    filterForecast = list()
+    filterTeam = list()
+
 if __name__ == '__main__':
     parse = DynamicWebParse(driver)
     parse.makeUnvisibleDriver()
@@ -34,23 +43,32 @@ if __name__ == '__main__':
         cappers = getAllCapper()
         for capper in cappers:
             filters = getFiltersForCapper(capper)
+            filtersData = list()
             for filter in filters:
-                filter.bookmaker = getFilterData(filter, FilterBookmaker, FilterBookmaker.bookmaker_id_bookmaker,
-                                         Bookmaker, Bookmaker.id_bookmaker)
-                filter.sport = getFilterData(filter, FilterSport, FilterSport.sport_id_sport,
-                                                Sport, Sport.id_sport)
-                filter.forecast = getFilterData(filter, FilterForecast, FilterForecast.filter_id_filter,
-                                                Forecast, Forecast.id_forecast)
-                filter.ligue = getFilterData(filter, FilterLigue, FilterLigue.ligue_id_ligue,
-                                             Ligue, Ligue.id_ligue)
-                filter.team = getFilterData(filter, FilterTeam, FilterTeam.team_id_team,
-                                            Team, Team.id_team)
+                filterData = AllFilterData()
+                for bk in getFilterData(filter, FilterBookmaker, FilterBookmaker.bookmaker_id_bookmaker,
+                                         Bookmaker, Bookmaker.id_bookmaker):
+                    filterData.filterBk.append(IntInterval(bk.id_bookmaker, bk.id_bookmaker))
+                for sport in getFilterData(filter, FilterSport, FilterSport.sport_id_sport,
+                                                Sport, Sport.id_sport):
+                    filterData.filterSport.append(IntInterval(sport.id_sport, sport.id_sport))
+                for forecast in getFilterData(filter, FilterForecast, FilterForecast.filter_id_filter,
+                                                Forecast, Forecast.id_forecast):
+                    filterData.filterForecast.append(IntInterval(forecast.id_forecast, forecast.id_forecast))
+                for ligue in getFilterData(filter, FilterLigue, FilterLigue.ligue_id_ligue,
+                                             Ligue, Ligue.id_ligue):
+                    filterData.filterLigue.append(IntInterval(ligue.id_ligue, ligue.id_ligue))
+
+                for team in getFilterData(filter, FilterTeam, FilterTeam.team_id_team,
+                                            Team, Team.id_team):
+                    filterData.filterTeam.append(IntInterval(team.id_team, team.id_team))
+
                 filter.dataFilter = getFilterData(filter, FilterData, FilterData.data_bet_id_data_bet,
                                                   DataBet, DataBet.id_data_bet)
                 for data in filter.dataFilter:
-                    data = AllFilters[getDataById(data.type_data_bet_id_type_data_bet,
+                    filterData.filtersData.append(AllFilters[getDataById(data.type_data_bet_id_type_data_bet,
                                                   TypeDataBet,
-                                                  TypeDataBet.id_type_data_bet).type_code](data.start, data.end)
+                                                  TypeDataBet.id_type_data_bet).type_code](data.start, data.end))
 
             resource = getResourceByID(capper.resource_id_resource)[0]
             link = generateLink(capper, resource)
