@@ -8,6 +8,12 @@ def getAllCapper():
 def getResourceByID(id):
     return Resource.select().where(Resource.id_resource == id)
 
+def getUserForFilter(filter):
+    return User.select(User)\
+        .join(UserFilter)\
+        .where(UserFilter.user_id_user == User.id_user,
+               UserFilter.filter_id_filter == filter.id_filter)
+
 
 def findWithName(name, baseClass, otherClass, msg):
     allBase = baseClass.select().where(baseClass.base_name == name)
@@ -136,12 +142,20 @@ def addBet(capper, pick, isArchive, filters=None):
         TeamBet.create(team_id_team=teamAway.id_team, bet_id_bet=bet.id_bet)
         for desc in descsBet:
             DescBet.create(bet_id_bet=bet.id_bet, descs_id_descs_bet=desc.id_descs_bet)
-
+        for filter in filters:
+            pass
     elif bet is not None:
         if bet.result is None and pick.getResult() is not None and pick.getKF() is not None:
             query = Bet.update(result=pick.getResult(), kf=pick.getKF()).where(Bet.id_bet == bet.id_bet)
             query.execute()
     return bet
+
+def getFilterDataForId(filter, DataFilter, DataFilterId, Data, DataId, idSearch):
+    return Data.select(Data)\
+        .join(DataFilter)\
+        .where(DataFilter.filter_id_filter == filter.id_filter,
+               DataFilterId == DataId,
+               DataId == idSearch)
 
 def getFilterData(filter, DataFilter, DataFilterId, Data, DataId):
     return Data.select(Data)\
