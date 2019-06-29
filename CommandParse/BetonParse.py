@@ -27,6 +27,11 @@ class BetonParse(IResourceParse):
     makeDate = lambda dateList, timeList: datetime.datetime(int(dateList[-1]), MonthRU[dateList[-2]], int(dateList[-3]),
                                                             int(timeList[0]), int(timeList[1]))
 
+    def generateLink(self, capper, resource):
+        return resource.url + "/" + ("" if capper.prev_data == "" else (capper.prev_data + "/")) + \
+               capper.personal_data + \
+               ("" if capper.post_data == "" else ("/" + capper.post_data)) + "/"
+
     def makePreAction(self, requests, data=None):
         if data is None or len(data) < 2 or \
                 data[0] is None or data[1] is None:
@@ -36,11 +41,18 @@ class BetonParse(IResourceParse):
         requests.getElem("//*[@class='auth_button']").submit()
 
     def makeLinkPicks(self, baseLink, data=None):
-        #return baseLink + self.picks + "/"
-        return 'https://octopustipster.blogabet.com/'
+        return baseLink + self.picks + "/"
 
-    def makeLinkArchive(self, baseLink, date=None):
+    def makeLinkArchive(self, baseLink, data=None):
+        date = data[2]
         return baseLink + self.archive + "/" + str(date.year) + "-" + str(date.month) + "/"
+
+    def setForecast(self, text, pick):
+        numsForecast = re.findall(' \d+\.\d+| \d+| \+\d+\.\d+| \+\d+| -\d+\.\d+| -\d+', text)
+        strVal = ("0" if len(numsForecast) == 0 else numsForecast[0]).strip()
+        pick.setValForecast(strVal)
+        pick.setForecast(text.replace(strVal, "").strip())
+        return pick
 
     def parsePicks(self, requests):
 
@@ -66,9 +78,7 @@ class BetonParse(IResourceParse):
             elif className == 'event_aux':
                 pick.addDesc(elem.text)
             elif className == 'outcome tte':
-                numsForecast = re.findall(' \d+\.\d+| \d+', elem.text)
-                pick.setValForecast(float(0 if len(numsForecast) == 0 else numsForecast[0]).strip())
-                pick.setForecast(elem.text.replace(str(pick.getValForecast()), "").strip())
+                pick = self.setForecast(self=self, text=elem.text, pick=pick)
             elif className == 'stake':
                 pick.setPercent(testFloat(elem.text[:-1]))
             elif className == 'odds':
@@ -120,7 +130,7 @@ class BetonParse(IResourceParse):
                         pick.addDesc(listData[1])
 
                 elif countColl == 3:
-                    pick.setForecast(elem.text)
+                    pick = self.setForecast(self=self, text=elem.text, pick=pick)
                     countColl += 1
                 elif countColl == 4:
                     pick.setPercent(testFloat(elem.text[:-1]))

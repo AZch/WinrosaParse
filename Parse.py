@@ -10,11 +10,6 @@ from Utils.DBConvUtils import BetToPick
 
 driver = '/home/az/ProjectsData/Drivers/chromedriver'
 
-def generateLink(capper, resource):
-    return resource.url + "/" + ("" if capper.prev_data == "" else (capper.prev_data + "/")) + \
-                                                                capper.personal_data + \
-                              ("" if capper.post_data == "" else ("/" + capper.post_data)) + "/"
-
 def getTypeByNameResource(resourceName):
     for name in resourceNames:
         if name['name'] == resourceName:
@@ -23,7 +18,7 @@ def getTypeByNameResource(resourceName):
 
 if __name__ == '__main__':
     parse = DynamicWebParse(driver)
-    parse.makeUnvisibleDriver()
+    parse.makeVisibleDriver()
     oldClassGet = None
 
     requests = Requests(parse.getDriver())
@@ -39,23 +34,23 @@ if __name__ == '__main__':
                 filter.users = getUserForFilter(filter)
 
             resource = getResourceByID(capper.resource_id_resource)[0]
-            link = generateLink(capper, resource)
 
             ClassGet = getTypeByNameResource(resource.name)
+            link = ClassGet.generateLink(ClassGet, capper, resource)
 
-            requests.allwaysLoadPage(link)
-
+            # uncomment if you need to login
             # if type(ClassGet) != type(oldClassGet):
+            #     requests.allwaysLoadPage(link)
             #     ClassGet.makePreAction(ClassGet, requests, (resource.login, resource.password))
 
-            requests.allwaysLoadPage(ClassGet.makeLinkPicks(ClassGet, link))
+            requests.allwaysLoadPage(ClassGet.makeLinkPicks(ClassGet, link, [capper.prev_data, capper.post_data]))
 
             startTrackTime()
             for pick in ClassGet.parsePicks(self=ClassGet, requests=requests):
                 addBet(capper, pick, False, filters)
             print("End parse current: " + str(endTrackTime()))
 
-            requests.allwaysLoadPage(ClassGet.makeLinkArchive(ClassGet, link, getDateTimeNow()))
+            requests.allwaysLoadPage(ClassGet.makeLinkArchive(ClassGet, link, [capper.prev_data, capper.post_data, getDateTimeNow()]))
 
             startTrackTime()
             for pick in ClassGet.parseArchive(self=ClassGet, requests=requests, lastBet=BetToPick(getLastInputResultBetForCupper(capper))):

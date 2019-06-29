@@ -12,6 +12,9 @@ class BlogabetParse(IResourceParse):
     protocolWord = 'https://'
     xpathPick = "//*[@class='block media _feedPick feed-pick']"
 
+    def generateLink(self, capper, resource):
+        return resource.url
+
     def getTimeEventData(self, timeEventStr):
         timeEvent = timeEventStr.split('Kick off:')[1].strip()
         date = timeEvent.split(',')[0].strip().split(' ')
@@ -38,16 +41,19 @@ class BlogabetParse(IResourceParse):
         requests.sendKeysGetElem("//*[@id='password']", data[1])
         requests.getElem("//*[contains(text(), ' Login')]").submit()
 
-    def makeLinkPicks(self, baseLink, data=None):
+    def makeLinks(self, baseLink, data=None):
         if isinstance(data, str):
             return self.protocolWord + data + "." + baseLink.replace(self.protocolWord, "")
         else:
             return baseLink
 
-    def makeLinkArchive(self, baseLink, date=None):
-        pass
+    def makeLinkPicks(self, baseLink, data=None):
+        return self.makeLinks(self=self, baseLink=baseLink, data=data[1])
 
-    def parsePicks(self, strData):
+    def makeLinkArchive(self, baseLink, data=None):
+        return self.makeLinks(self=self, baseLink=baseLink, data=data[1])
+
+    def parsePagePicks(self, strData):
         pick = Pick()
         elemTexts = strData.text.split('\n')
         pick.setTimeInput(self.getTimeInputData(self, elemTexts[1]))
@@ -57,7 +63,7 @@ class BlogabetParse(IResourceParse):
         forecast_kf = elemTexts[3]
         forecast = forecast_kf.split('@')[0]
         try:
-            valForecast = re.findall("\+\d+.\d+|\-\d+.\d+|\d+.\d+|\d+", forecast)[0]
+            valForecast = re.findall(" \+\d+.\d+| \-\d+.\d+| \d+.\d+| \d+ | \+\d+| -\d+", forecast)[0].strip()
             forecast = forecast.replace(valForecast + " ", "").strip()
         except:
             valForecast = 0.0
@@ -87,10 +93,13 @@ class BlogabetParse(IResourceParse):
         picks = list()
         dateNow = getDateTimeNow()
         for elem in requests.getElems(self.xpathPick):
-            pick = self.parsePicks(self, elem)
-            if pick.isValid() and dateNow < pick.getTimeEvent() and pick.getResult() == 0.0:
-                pick.setResult(None)
-                picks.append(pick)
+            pick = self.parsePagePicks(self, elem)
+            if pick.isValid():
+                if dateNow < pick.getTimeEvent() and pick.getResult() == 0.0:
+                    pick.setResult(None)
+                    picks.append(pick)
+                else:
+                    break
         return picks
 
     def parseArchive(self, requests, lastBet=None):
@@ -98,7 +107,10 @@ class BlogabetParse(IResourceParse):
         dateNow = getDateTimeNow()
         dateNow += datetime.timedelta(hours=-12)
         for elem in requests.getElems(self.xpathPick):
-            pick = self.parsePicks(self, elem)
-            if pick.isValid() and dateNow > pick.getTimeEvent():
-                picks.append(pick)
+            pick = self.parsePagePicks(self, elem)
+            if pick.isValid():
+                if dateNow > pick.getTimeEvent():
+                    picks.append(pick)
+                else:
+                    break
         return picks

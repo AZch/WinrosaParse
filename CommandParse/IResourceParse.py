@@ -20,3 +20,7 @@ class IResourceParse(ABC):
     @abstractmethod
     def parseArchive(self, requests, lastBet=None):
         pass
+
+    @abstractmethod
+    def generateLink(self, capper, resource):
+        pass
