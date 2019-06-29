@@ -18,7 +18,7 @@ def getTypeByNameResource(resourceName):
 
 if __name__ == '__main__':
     parse = DynamicWebParse(driver)
-    parse.makeVisibleDriver()
+    parse.makeUnvisibleDriver()
     oldClassGet = None
 
     requests = Requests(parse.getDriver())
