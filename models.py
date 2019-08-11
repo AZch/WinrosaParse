@@ -171,15 +171,10 @@ class DescsNames(BaseModel):
 
 class Filter(BaseModel):
     type_filter = IntegerField(column_name='TypeFilter')
-    user_id_user = ForeignKeyField(column_name='User_idUser', field='id_user', model=User)
-    id_filter = IntegerField(column_name='idFilter')
+    id_filter = AutoField(column_name='idFilter')
 
     class Meta:
         table_name = 'Filter'
-        indexes = (
-            (('id_filter', 'user_id_user'), True),
-        )
-        primary_key = CompositeKey('id_filter', 'user_id_user')
 
 class FilterBookmaker(BaseModel):
     bookmaker_id_bookmaker = ForeignKeyField(column_name='Bookmaker_idBookmaker', field='id_bookmaker', model=Bookmaker)
@@ -189,9 +184,19 @@ class FilterBookmaker(BaseModel):
     class Meta:
         table_name = 'FilterBookmaker'
 
+class UserFilter(BaseModel):
+    bank = CharField(column_name='Bank')
+    channel = CharField(column_name='Channel', null=True)
+    filter_id_filter = ForeignKeyField(column_name='Filter_idFilter', field='id_filter', model=Filter)
+    user_id_user = ForeignKeyField(column_name='User_idUser', field='id_user', model=User)
+    id_user_filter = AutoField(column_name='idUserFilter')
+
+    class Meta:
+        table_name = 'UserFilter'
+
 class FilterCapper(BaseModel):
     capper_id_capper = ForeignKeyField(column_name='Capper_idCapper', field='id_capper', model=Capper)
-    filter_id_filter = ForeignKeyField(column_name='Filter_idFilter', field='id_filter', model=Filter)
+    user_filter_id_user_filter = ForeignKeyField(column_name='UserFilter_idUserFilter', field='id_user_filter', model=UserFilter)
     id_filter_capper = AutoField(column_name='idFilterCapper')
 
     class Meta:
@@ -321,12 +326,7 @@ class UserBk(BaseModel):
         primary_key = CompositeKey('id_user_bk', 'user_id_user')
 
 class UserBet(BaseModel):
-    bet_forecast_id_forecast = ForeignKeyField(column_name='Bet_Forecast_idForecast', field='forecast_id_forecast', model=Bet)
-    bet_ligue_sport_id_sport = IntegerField(column_name='Bet_Ligue_Sport_idSport')
-    bet_ligue_id_ligue = IntegerField(column_name='Bet_Ligue_idLigue')
-    bet_resource_resource_id_resource = IntegerField(column_name='Bet_Resource_Resource_idResource')
-    bet_resource_id_capper = IntegerField(column_name='Bet_Resource_idCapper')
-    bet_id_bet = ForeignKeyField(backref='Bet_bet_id_bet_set', column_name='Bet_idBet', field='id_bet', model=Bet)
+    bet_id_bet = ForeignKeyField(column_name='Bet_idBet', field='id_bet', model=Bet)
     filter_capper_id_filter_capper = ForeignKeyField(column_name='FilterCapper_idFilterCapper', field='id_filter_capper', model=FilterCapper)
     real_kf = FloatField(column_name='RealKF')
     real_price_bet = FloatField(column_name='RealPriceBet')
@@ -335,17 +335,4 @@ class UserBet(BaseModel):
 
     class Meta:
         table_name = 'UserBet'
-        indexes = (
-            (('bet_id_bet', 'bet_forecast_id_forecast'), False),
-            (('bet_id_bet', 'bet_resource_id_capper', 'bet_resource_resource_id_resource', 'bet_ligue_id_ligue', 'bet_ligue_sport_id_sport', 'bet_forecast_id_forecast'), False),
-        )
-
-class UserFilter(BaseModel):
-    bank = CharField(column_name='Bank')
-    filter_id_filter = ForeignKeyField(column_name='Filter_idFilter', field='id_filter', model=Filter)
-    user_id_user = ForeignKeyField(column_name='User_idUser', field='id_user', model=User)
-    id_user_filter = AutoField(column_name='idUserFilter')
-
-    class Meta:
-        table_name = 'UserFilter'
 

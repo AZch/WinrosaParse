@@ -1,10 +1,10 @@
-import datetime
 import re
 
 from BaseFunction import *
 from CommandParse.IResourceParse import IResourceParse
 from Constants.Words import *
 from Picks import Pick
+from Utils.TimeUtils import *
 
 
 class BetonParse(IResourceParse):
@@ -27,6 +27,11 @@ class BetonParse(IResourceParse):
     makeDate = lambda dateList, timeList: datetime.datetime(int(dateList[-1]), MonthRU[dateList[-2]], int(dateList[-3]),
                                                             int(timeList[0]), int(timeList[1]))
 
+    def generateLink(self, capper, resource):
+        return resource.url + "/" + ("" if capper.prev_data == "" else (capper.prev_data + "/")) + \
+               capper.personal_data + \
+               ("" if capper.post_data == "" else ("/" + capper.post_data)) + "/"
+
     def makePreAction(self, requests, data=None):
         if data is None or len(data) < 2 or \
                 data[0] is None or data[1] is None:
@@ -35,23 +40,33 @@ class BetonParse(IResourceParse):
         requests.sendKeysGetElem("//*[@id='user_password_id_module']", data[1])
         requests.getElem("//*[@class='auth_button']").submit()
 
-    def makeLinkPicks(self, baseLink):
+    def makeLinkPicks(self, baseLink, data=None):
         return baseLink + self.picks + "/"
 
-    def makeLinkArchive(self, baseLink, date=None):
+    def makeLinkArchive(self, baseLink, data=None):
+        date = data[2]
         return baseLink + self.archive + "/" + str(date.year) + "-" + str(date.month) + "/"
 
+    def setForecast(self, text, pick):
+        numsForecast = re.findall(' \d+\.\d+| \d+| \+\d+\.\d+| \+\d+| -\d+\.\d+| -\d+', text)
+        strVal = ("0" if len(numsForecast) == 0 else numsForecast[0]).strip()
+        pick.setValForecast(strVal)
+        pick.setForecast(text.replace(strVal, "").strip())
+        return pick
+
     def parsePicks(self, requests):
+
         picks = list()
         pick = Pick()
         oldStyle = ''
         for elem in requests.getElems(self.xpathPicks):
             className = elem.get_attribute("class")
             if className == 'starts':
-                pick, oldStyle = self.setPickData(self, "Событие:", "Введено:", pick, elem, requests, oldStyle)
+                pick, oldStyle = self.setPickData(self, "Событие:", "Введено:", pick, elem, requests, oldStyle, True)
             if className == 'sport tte soc':
                 appendPick(pick, picks)
                 pick = Pick()
+                requests.moveToElem(elem)
                 pick.setSport(elem.text)
             elif className == 'location':
                 pick.setEvent(elem.text.split('\n')[1])
@@ -63,7 +78,7 @@ class BetonParse(IResourceParse):
             elif className == 'event_aux':
                 pick.addDesc(elem.text)
             elif className == 'outcome tte':
-                pick.setForecast(elem.text)
+                pick = self.setForecast(self=self, text=elem.text, pick=pick)
             elif className == 'stake':
                 pick.setPercent(testFloat(elem.text[:-1]))
             elif className == 'odds':
@@ -90,13 +105,14 @@ class BetonParse(IResourceParse):
         oldStyle = ''
         for elem in requests.getElems(self.xpathArchive):
             if elem.get_attribute("class") == 'tte':
-                pick, oldStyle = self.setPickData(self, 'Началось:', 'Введено:', pick, elem, requests, oldStyle)
+                pick, oldStyle = self.setPickData(self, 'Началось:', 'Введено:', pick, elem, requests, oldStyle, True)
             else:
                 if countColl == 0:
                     pick = Pick()
                     # pick.setEvent(elem.text)
                     countColl += 1
                 elif countColl == 1:
+                    requests.moveToElem(elem)
                     pick.setSport(elem.text)
                     countColl += 1
                 elif countColl == 2:
@@ -114,7 +130,7 @@ class BetonParse(IResourceParse):
                         pick.addDesc(listData[1])
 
                 elif countColl == 3:
-                    pick.setForecast(elem.text)
+                    pick = self.setForecast(self=self, text=elem.text, pick=pick)
                     countColl += 1
                 elif countColl == 4:
                     pick.setPercent(testFloat(elem.text[:-1]))
@@ -147,13 +163,20 @@ class BetonParse(IResourceParse):
         while oldStyle == elem.get_attribute('style'): continue
         return elem.get_attribute('style')
 
-    def setPickData(self, strEvent, strInput, pick, elem, requests, oldStyle):
+    def setPickData(self, strEvent, strInput, pick, elem, requests, oldStyle, needWait):
         requests.moveToElem(elem)
-        oldStyle = self.waitDate(self, requests, oldStyle)
-        for dateElem in requests.getElems("//*[@class='date_hint']/table/tbody/tr"):
-            dateText = dateElem.text
-            if strInput in dateText:
-                pick.setTimeInput(self.getDate(self, strInput, dateText))
-            elif strEvent in dateText:
-                pick.setTimeEvent(self.getDate(self, strEvent, dateText))
-        return pick, oldStyle
+        try:
+            if needWait:
+                oldStyle = self.waitDate(self=self, requests=requests, oldStyle=oldStyle)
+                requests.moveToElem(elem)
+            for dateElem in requests.getElems("//*[@class='date_hint']/table/tbody/tr"):
+                dateText = dateElem.text
+                if strInput in dateText:
+                    pick.setTimeInput(self.getDate(self=self, prevWord=strInput, baseStr=dateText))
+                elif strEvent in dateText:
+                    pick.setTimeEvent(self.getDate(self=self, prevWord=strEvent, baseStr=dateText))
+            if pick.getTimeEvent() is None or pick.getTimeInput() is None:
+                return self.setPickData(self, strEvent, strInput, pick, elem, requests, oldStyle, False)
+            return pick, oldStyle
+        except:
+            return self.setPickData(self, strEvent, strInput, pick, elem, requests, oldStyle, False)
